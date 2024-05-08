@@ -27,7 +27,7 @@
     cargo2nix,
     ...
   } @ inputs:
-    flake-utils.lib.eachSystem ["x86_64-linux"] (system: let
+    flake-utils.lib.eachSystem ["x86_64-linux" "aarch64-linux"] (system: let
       overlays = [
         cargo2nix.overlays.default
         (import rust-overlay)
@@ -35,19 +35,16 @@
       pkgs = import nixpkgs {
         inherit system overlays;
       };
-      /*
       qtMerged = with pkgs;
-      qt6.callPackage ({
-        env,
-        qtbase,
-      }:
-        env "qt-${qtbase.version}" (with qt6; [
-          qtwayland
-          libglvnd
-          qtdeclarative
-        ])) {};
-      */
-      qtMerged = pkgs.qt6.full;
+        qt6.callPackage ({
+          env,
+          qtbase,
+        }:
+          env "qt-${qtbase.version}" (with qt6; [
+            qtwayland
+            libglvnd
+            qtdeclarative
+          ])) {};
       rustPkgs = pkgs.rustBuilder.makePackageSet {
         packageFun = import ./Cargo.nix;
         rustChannel = "stable";
