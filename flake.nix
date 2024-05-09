@@ -53,6 +53,18 @@
           pkgs.rustBuilder.overrides.all
           ++ [
             (pkgs.rustBuilder.rustLib.makeOverride {
+              name = "ruma-macros";
+              overrideAttrs = drv: {
+                postPatch =
+                  drv.postPatch
+                  or ""
+                  + ''
+                    substituteInPlace src/api.rs --replace 'manifest_parsed.features.client.is_none()' 'false'
+                    substituteInPlace src/api.rs --replace 'manifest_parsed.features.server.is_none()' 'false'
+                  '';
+              };
+            })
+            (pkgs.rustBuilder.rustLib.makeOverride {
               name = "cxx-qt";
               overrideAttrs = drv: {
                 dontWrapQtApps = true;
