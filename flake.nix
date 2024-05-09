@@ -65,6 +65,42 @@
               };
             })
             (pkgs.rustBuilder.rustLib.makeOverride {
+              name = "matrix-sdk-crypto";
+              overrideArgs = args: {
+                dependencies =
+                  args.dependencies
+                  // {
+                    inherit (args.dependencies.ruma.dependencies) ruma_common;
+                  };
+              };
+            })
+            (pkgs.rustBuilder.rustLib.makeOverride {
+              name = "matrix-sdk-base";
+              overrideArgs = args: {
+                dependencies =
+                  args.dependencies
+                  // {
+                    inherit (args.dependencies.ruma.dependencies) ruma_events;
+                  };
+              };
+            })
+            (pkgs.rustBuilder.rustLib.makeOverride {
+              name = "matrix-sdk";
+              overrideArgs = args: {
+                dependencies =
+                  args.dependencies
+                  // {
+                    inherit (args.dependencies.ruma.dependencies) ruma_events;
+                  };
+              };
+              overrideAttrs = drv: {
+                postPatch = ''
+                  substituteInPlace src/client/futures.rs --replace '#[cfg_vis(target_arch = "wasm32", pub(crate))]' ""
+                  substituteInPlace src/encryption/futures.rs --replace '#[cfg_vis(target_arch = "wasm32", pub(crate))]' ""
+                '';
+              };
+            })
+            (pkgs.rustBuilder.rustLib.makeOverride {
               name = "cxx-qt";
               overrideAttrs = drv: {
                 dontWrapQtApps = true;
