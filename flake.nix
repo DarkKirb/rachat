@@ -85,6 +85,16 @@
               };
             })
             (pkgs.rustBuilder.rustLib.makeOverride {
+              name = "secret-service";
+              overrideArgs = args: {
+                dependencies =
+                  args.dependencies
+                  // {
+                    inherit (args.dependencies.zbus.dependencies) zvariant;
+                  };
+              };
+            })
+            (pkgs.rustBuilder.rustLib.makeOverride {
               name = "matrix-sdk";
               overrideArgs = args: {
                 dependencies =
