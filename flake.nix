@@ -200,6 +200,8 @@
             alejandra
             qt6.full
             qtcreator
+            sqlite
+            gdb
           ];
         };
       packages = {

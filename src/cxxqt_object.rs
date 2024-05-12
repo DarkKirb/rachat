@@ -42,3 +42,10 @@ impl Initialize for qobject::RootWindow {
         crate::APP_STATE.set_root_window(thread);
     }
 }
+
+impl Drop for RootWindowRust {
+    fn drop(&mut self) {
+        crate::APP_STATE.remove_root_window();
+        println!("Dropping RootWindowRust");
+    }
+}
