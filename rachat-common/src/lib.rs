@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::fs;
 
+pub mod crypto;
 pub mod data_store;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
