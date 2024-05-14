@@ -17,7 +17,7 @@ impl Debug for RootKey {
 impl RootKey {
     #[must_use]
     pub fn new() -> Self {
-        Self(rand::thread_rng().gen())
+        Self(rand::thread_rng().r#gen())
     }
 
     #[must_use]
