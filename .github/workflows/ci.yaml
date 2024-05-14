@@ -198,10 +198,19 @@ jobs:
         with:
           command: build
           args: --release
+      - run: |
+          mkdir dist
+          cp target/release/rachat dist
+        if: matrix.os == 'ubuntu-latest'
+      - run: |
+          mkdir dist
+          cp target/release/rachat.exe dist
+          $libsPath = &qmake -query QT_INSTALL_LIBS
+          cp $libsPath/Qt6Qml.dll $libsPath/Qt6Core.dll $libsPath/Qt6Gui.dll dist
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
       - uses: actions/upload-artifact@v4
         with:
           name: rachat-${{ matrix.os }}
-          path: |
-            target/release/rachat
-            target/release/rachat.exe
+          path: dist
           compression-level: 9
