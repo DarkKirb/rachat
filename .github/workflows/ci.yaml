@@ -205,8 +205,7 @@ jobs:
       - run: |
           mkdir dist
           cp target/release/rachat.exe dist
-          $libsPath = &qmake -query QT_INSTALL_LIBS
-          cp $libsPath/Qt6Qml.dll $libsPath/Qt6Core.dll $libsPath/Qt6Gui.dll dist
+          windeployqt dist/rachat.exe
         if: matrix.os == 'windows-latest'
         shell: pwsh
       - uses: actions/upload-artifact@v4
