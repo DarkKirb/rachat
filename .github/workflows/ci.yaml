@@ -201,5 +201,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: rachat-${{ matrix.os }}
-          path: target/release/rachat(.exe)?
+          path: |
+            target/release/rachat
+            target/release/rachat.exe
           compression-level: 9
