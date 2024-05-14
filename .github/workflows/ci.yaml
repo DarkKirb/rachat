@@ -39,10 +39,6 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           version: 6.6.*
-      - uses: crazy-max/ghaction-chocolatey@v3
-        with:
-          args: install sqlite
-        if: ${{ matrix.os }} == "windows-latest"
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -198,10 +194,6 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           version: 6.6.*
-      - uses: crazy-max/ghaction-chocolatey@v3
-        with:
-          args: install sqlite
-        if: ${{ matrix.os }} == "windows-latest"
       - uses: actions-rs/cargo@v1
         with:
           command: build
