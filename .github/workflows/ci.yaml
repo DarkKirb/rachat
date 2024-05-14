@@ -17,7 +17,7 @@ jobs:
           #- nightly
         os:
           - ubuntu-latest
-          #- windows-latest
+          - windows-latest
           #- macos-latest
     steps:
       - uses: actions/checkout@v4
@@ -172,7 +172,7 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          #- windows-latest
+          - windows-latest
           #- macos-latest
     steps:
       - uses: actions/checkout@v4
