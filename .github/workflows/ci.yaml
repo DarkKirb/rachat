@@ -35,6 +35,10 @@ jobs:
           profile: minimal
           toolchain: ${{ matrix.rust }}
           override: true
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: 6.*
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -186,10 +190,40 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: (github.ref == 'refs/heads/master') && success()
-  update_contributors:
-    runs-on: ubuntu-latest
+  release:
+    needs:
+      - rustfmt
+      - clippy
+      - docs
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: akhilmhdh/contributors-readme-action@v2.3.10
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ matrix.os }}-cargo-stable-${{ hashFiles('**/Cargo.lock') }}-release
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rachat-${{ matrix.os }}
+          path: target/release/rachat(.exe)?
+          compression-level: 9
