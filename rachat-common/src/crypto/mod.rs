@@ -15,11 +15,13 @@ impl Debug for RootKey {
 }
 
 impl RootKey {
+    #[must_use]
     pub fn new() -> Self {
         Self(rand::thread_rng().gen())
     }
 
-    pub fn as_bytes(&self) -> &[u8; 32] {
+    #[must_use]
+    pub const fn as_bytes(&self) -> &[u8; 32] {
         &self.0
     }
 
@@ -41,7 +43,20 @@ impl RootKey {
             .collect()
     }
 
-    pub async fn load_from_keyring(profile: impl Display) -> Result<Self> {
+    /// Attempts to load the root key from the keyring from a specific profile.
+    ///
+    /// If it doesn’t exist, it will generate a new one and store it in the keyring.
+    ///
+    /// # Errors
+    /// This function will return an error if accessing the keyring fails.
+    ///
+    /// Reasons for that may include:
+    ///
+    /// - The keyring does not exist.
+    /// - The keyring is closed
+    /// - The user has rejected access to the keyring.
+    /// - There is some sort of IO error preventing the keyring from working.
+    pub async fn load_from_keyring(profile: impl Display + Send) -> Result<Self> {
         let profile = format!("{profile}");
         let secret_json = tokio::task::spawn_blocking(move || -> Result<String> {
             let entry = Entry::new("rs.chir.rachat", &format!("{profile}-key"))?;

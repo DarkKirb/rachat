@@ -11,7 +11,7 @@ use tokio::fs;
 pub mod crypto;
 pub mod data_store;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
     pub default_profile: String,
@@ -20,7 +20,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            default_profile: "default".to_string(),
+            default_profile: "default".to_owned(),
         }
     }
 }
@@ -28,13 +28,13 @@ impl Default for Config {
 impl Config {
     pub async fn read(project_dirs: &ProjectDirs) -> Result<Self> {
         let config_path = project_dirs.config_dir().join("config.json");
-        let config: Config = if config_path.exists() {
+        let config: Self = if config_path.exists() {
             let config_str = fs::read_to_string(&config_path)
                 .await
                 .context("Reading the configuration file")?;
             serde_json::from_str(&config_str).context("Parsing the configuration file")?
         } else {
-            Config::default()
+            Self::default()
         };
         // Rewrite the configuration file
         fs::write(config_path, serde_json::to_string(&config)?)

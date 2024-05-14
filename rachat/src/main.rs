@@ -1,17 +1,15 @@
 pub mod cxxqt_object;
 
-use std::{pin::Pin, sync::Arc, time::Duration};
+use std::{pin::Pin, time::Duration};
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use cxx_qt::CxxQtThread;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QString, QUrl};
 use cxxqt_object::qobject::RootWindow;
 use once_cell::sync::Lazy;
-use parking_lot::{Mutex, RwLock};
+use parking_lot::Mutex;
 use rachat_common::Rachat;
 use serde::{Deserialize, Serialize};
-use tokio::fs;
-use tracing::debug;
 
 pub struct AppState {
     root_window: Mutex<Option<CxxQtThread<RootWindow>>>,

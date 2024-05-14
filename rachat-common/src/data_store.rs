@@ -1,8 +1,6 @@
 use anyhow::Result;
 use directories_next::ProjectDirs;
-use keyring::Entry;
 use matrix_sdk::config::StoreConfig;
-use rand::{distributions::Alphanumeric, Rng};
 use std::{path::PathBuf, sync::Arc};
 use tracing::instrument;
 
