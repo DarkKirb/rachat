@@ -67,45 +67,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-  coverage:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/
-          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: nightly
-          override: true
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: 6.6.*
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-fail-fast
-        env:
-          CARGO_INCREMENTAL: "0"
-          RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
-          RUSTDOCFLAGS: "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests"
-      - uses: actions-rs/grcov@v0.1
-        id: coverage
-      - name: Coveralls upload
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: ${{ steps.coverage.outputs.report }}
   rustfmt:
-    needs: coverage
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -129,7 +92,7 @@ jobs:
           command: fmt
           args: --all -- --check
   clippy:
-    needs: coverage
+    needs: test
     runs-on: ubuntu-latest
     env:
       CLIPPY_FLAGS: -Dfuture-incompatible -Ddeprecated-in-future -Welided-lifetimes-in-paths -Wexplicit-outlives-requirements -Dkeyword-idents -Wmacro-use-extern-crate -Wmeta-variable-misuse -Dmissing-abi -Dmissing-copy-implementations -Dmissing-debug-implementations -Wmissing-docs -Wnoop-method-call -Wpointer-structural-match -Wsingle-use-lifetimes -Wtrivial-casts -Wtrivial-numeric-casts -Wunreachable-pub -Dunsafe-op-in-unsafe-fn -Wunused-crate-dependencies -Wunused-extern-crates -Wunused-import-braces -Wunused-lifetimes -Wunused-qualifications -Wvariant-size-differences -Dclippy::all -Wclippy::nursery -Wclippy::pedantic -Wclippy::cargo -Wclippy::clone_on_ref_ptr -Dclippy::default_union_representation -Dclippy::expect_used -Wclippy::get_unwrap -Wclippy::if_then_some_else_none -Dclippy::lossy_float_literal -Wclippy::map_err_ignore -Wclippy::missing_docs_in_private_items -Wclippy::panic -Dclippy::panic_in_result_fn -Wclippy::rc_buffer -Dclippy::rc_mutex -Wclippy::str_to_string -Wclippy::try_err -Dclippy::undocumented_unsafe_blocks -Dclippy::unwrap_used -Aclippy::type-repetition-in-bounds -Aclippy::trait-duplication-in-bounds
@@ -160,17 +123,12 @@ jobs:
           args: clippy-sarif sarif-fmt
       - run: cargo clippy --message-format=json -- $CLIPPY_FLAGS -A dead_code -A unused_variables | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
-      - name: Upload analysis results to GitHub
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: rust-clippy-results.sarif
-          wait-for-processing: true
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
           args: -- ${{ env.CLIPPY_FLAGS }}
   docs:
-    needs: coverage
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
