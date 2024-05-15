@@ -205,7 +205,7 @@ jobs:
       - run: |
           mkdir dist
           cp target/release/rachat.exe dist
-          windeployqt dist/rachat.exe
+          windeployqt --qmldir . --release dist/rachat.exe
         if: matrix.os == 'windows-latest'
         shell: pwsh
       - uses: actions/upload-artifact@v4
