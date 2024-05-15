@@ -38,7 +38,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: 6.6.*
+          version: 6.7.*
       - uses: actions-rs/cargo@v1
         with:
           command: check
@@ -63,7 +63,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: 6.6.*
+          version: 6.7.*
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -114,7 +114,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: 6.6.*
+          version: 6.7.*
       - uses: actions-rs/cargo@v1
         with:
           command: install
@@ -146,7 +146,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: 6.6.*
+          version: 6.7.*
       - uses: actions-rs/cargo@v1
         with:
           command: doc
@@ -193,7 +193,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: 6.6.*
+          version: 6.7.*
       - uses: actions-rs/cargo@v1
         with:
           command: build
