@@ -55,10 +55,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+          key: ubuntu-latest-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -80,11 +80,11 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+          key: ubuntu-latest-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
           components: rustfmt
       - uses: actions-rs/cargo@v1
@@ -104,11 +104,11 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+          key: ubuntu-latest-cargo-stable-${{ hashFiles('**/Cargo.lock') }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
-          toolchain: nightly
+          toolchain: stable
           override: true
           components: clippy
       - name: Install Qt
@@ -138,10 +138,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ubuntu-latest-cargo-nightly-${{ hashFiles('**/Cargo.lock') }}
+          key: ubuntu-latest-cargo-stable-${{ hashFiles('**/Cargo.lock') }}-docs
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: nightly
+          toolchain: stable
           override: true
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
