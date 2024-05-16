@@ -1,6 +1,6 @@
 pub mod cxxqt_object;
 
-use std::{pin::Pin, time::Duration};
+use std::{env, pin::Pin, time::Duration};
 
 use anyhow::Result;
 use cxx_qt::CxxQtThread;
@@ -75,6 +75,13 @@ async fn main() -> Result<()> {
 
     // Create the application and engine
     let mut app = QGuiApplication::new();
+    // bug workaround for missing dark theme on windows
+    #[cfg(target_os = "windows")]
+    {
+        if env::var("QT_QUICK_CONTROLS_STYLE").is_err() {
+            env::set_var("QT_QUICK_CONTROLS_STYLE", "Fusion");
+        }
+    }
     let mut engine = QQmlApplicationEngine::new();
 
     // Load the QML path into the engine
