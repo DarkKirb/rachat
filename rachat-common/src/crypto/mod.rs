@@ -3,44 +3,60 @@ use std::fmt::{Debug, Display};
 use anyhow::Result;
 use keyring::Entry;
 use rand::{distributions::Alphanumeric, CryptoRng, Rng, SeedableRng};
-use serde::{Deserialize, Serialize};
+use secrecy::{ExposeSecret, Secret, Zeroize};
+/// 256 bit key derivation key. This is used as the IKM of a KDF.
+#[derive(Clone, Debug)]
+pub struct KDFSecretKey(Secret<[u8; 32]>);
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct RootKey([u8; 32]);
-
-impl Debug for RootKey {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("RootKey").field(&"opaque").finish()
-    }
-}
-
-impl RootKey {
+impl KDFSecretKey {
+    /// Generates a random new 256 key.
+    ///
+    /// This is intended to be the root key for the key hierarchy.
     #[must_use]
     pub fn new() -> Self {
-        Self(rand::thread_rng().r#gen())
+        let mut key = rand::thread_rng().r#gen();
+        Self::from_bytes(&mut key)
     }
 
+    /// Creates a new secret key from 32 bytes
     #[must_use]
-    pub const fn as_bytes(&self) -> &[u8; 32] {
-        &self.0
+    fn from_bytes(bytes: &mut [u8; 32]) -> Self {
+        let res = Self(Secret::new(*bytes));
+        bytes.zeroize();
+        res
     }
 
-    pub fn generate_subkey(&self, purpose: impl Display) -> [u8; 32] {
+    /// Generates a KDF child key.
+    ///
+    /// The purpose must be unique for each different subkey.
+    ///
+    /// The purpose may not include any secret information, including other keys.
+    #[must_use]
+    pub fn generate_kdf_subkey(&self, purpose: impl Display) -> Self {
         let context = format!("rs.chir.rachat.crypto: {purpose}");
-        blake3::derive_key(&context, &self.0)
+        let mut blake_key = blake3::derive_key(&context, self.0.expose_secret());
+        Self::from_bytes(&mut blake_key)
     }
 
+    /// Generates a seeded CSPRNG with specified purpose.
+    /// `
+    /// From the same root key and subkey, it will generate the same CSPRNG every time.`
+    #[must_use]
     pub fn subkey_rng(&self, purpose: impl Display) -> impl CryptoRng + Rng {
-        let subkey = self.generate_subkey(purpose);
-        rand_chacha::ChaChaRng::from_seed(subkey)
+        let subkey = self.generate_kdf_subkey(purpose);
+        rand_chacha::ChaChaRng::from_seed(*subkey.0.expose_secret())
     }
 
-    pub fn subkey_passphrase(&self, purpose: impl Display) -> String {
-        self.subkey_rng(purpose)
+    /// Generates an alphanumeric passphrase with specified purpose.
+    #[must_use]
+    pub fn subkey_passphrase(&self, purpose: impl Display) -> Secret<String> {
+        let secret = self
+            .subkey_rng(purpose)
             .sample_iter(&Alphanumeric)
             .take(32)
             .map(char::from)
-            .collect()
+            .collect();
+        Secret::new(secret)
     }
 
     /// Attempts to load the root key from the keyring from a specific profile.
@@ -58,13 +74,13 @@ impl RootKey {
     /// - There is some sort of IO error preventing the keyring from working.
     pub async fn load_from_keyring(profile: impl Display + Send) -> Result<Self> {
         let profile = format!("{profile}");
-        let secret_json = tokio::task::spawn_blocking(move || -> Result<String> {
+        let mut secret_json = tokio::task::spawn_blocking(move || -> Result<String> {
             let entry = Entry::new("rs.chir.rachat", &format!("{profile}-key"))?;
             match entry.get_password() {
                 Ok(entry) => Ok(entry),
                 Err(keyring::Error::NoEntry) => {
                     let secret = Self::new();
-                    let secret_json = serde_json::to_string(&secret)?;
+                    let secret_json = serde_json::to_string(secret.0.expose_secret())?;
                     entry.set_password(&secret_json)?;
                     Ok(secret_json)
                 }
@@ -73,17 +89,13 @@ impl RootKey {
         })
         .await??;
 
-        Ok(serde_json::from_str(&secret_json)?)
+        let mut key = serde_json::from_str(&secret_json)?;
+        secret_json.zeroize();
+        Ok(Self::from_bytes(&mut key))
     }
 }
 
-impl From<[u8; 32]> for RootKey {
-    fn from(bytes: [u8; 32]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl Default for RootKey {
+impl Default for KDFSecretKey {
     fn default() -> Self {
         Self::new()
     }
@@ -93,7 +105,8 @@ impl Default for RootKey {
 mod tests {
     #[test]
     fn test_passphrase_stability() {
-        let rk = super::RootKey::from([0u8; 32]);
+        let mut rk = [0u8; 32];
+        let rk = super::KDFSecretKey::from_bytes(&mut rk);
         assert_eq!(
             rk.subkey_passphrase("test"),
             "MH0ldlHJ0EyUjkxmOYfUutnktw7lTdYD"
