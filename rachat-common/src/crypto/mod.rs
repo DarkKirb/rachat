@@ -103,12 +103,14 @@ impl Default for KDFSecretKey {
 
 #[cfg(test)]
 mod tests {
+    use secrecy::ExposeSecret;
+
     #[test]
     fn test_passphrase_stability() {
         let mut rk = [0u8; 32];
         let rk = super::KDFSecretKey::from_bytes(&mut rk);
         assert_eq!(
-            rk.subkey_passphrase("test"),
+            rk.subkey_passphrase("test").expose_secret(),
             "MH0ldlHJ0EyUjkxmOYfUutnktw7lTdYD"
         );
     }
