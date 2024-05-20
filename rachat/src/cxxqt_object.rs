@@ -16,12 +16,19 @@ pub mod qobject {
         #[qml_element]
         #[qproperty(QString, title_string)]
         type RootWindow = super::RootWindowRust;
+
+        #[qobject]
+        #[qml_element]
+        type SelectHomeserver = super::SelectHomeserverRust;
     }
 
     impl cxx_qt::Threading for RootWindow {}
     impl cxx_qt::Constructor<()> for RootWindow {}
 
-    unsafe extern "RustQt" {}
+    unsafe extern "RustQt" {
+        #[qinvokable]
+        fn select_homeserver(self: &SelectHomeserver, homeserver: QString);
+    }
 }
 
 use core::pin::Pin;
@@ -49,3 +56,5 @@ impl Drop for RootWindowRust {
         println!("Dropping RootWindowRust");
     }
 }
+
+pub use crate::select_homeserver::SelectHomeserverRust;

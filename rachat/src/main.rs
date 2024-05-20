@@ -1,12 +1,13 @@
 pub mod cxxqt_object;
+pub mod select_homeserver;
 
-use std::{env, pin::Pin, time::Duration};
+use std::{env, pin::Pin, sync::Arc, time::Duration};
 
 use anyhow::Result;
 use cxx_qt::CxxQtThread;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QString, QUrl};
 use cxxqt_object::qobject::RootWindow;
-use once_cell::sync::Lazy;
+use once_cell::sync::{Lazy, OnceCell};
 use parking_lot::Mutex;
 use rachat_common::Rachat;
 use serde::{Deserialize, Serialize};
@@ -58,11 +59,16 @@ impl Default for Config {
     }
 }
 
+static RACHAT: OnceCell<Arc<Rachat>> = OnceCell::new();
+pub fn rachat() -> Arc<Rachat> {
+    RACHAT.get().unwrap().clone()
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
-    Rachat::new().await?;
+    RACHAT.set(Rachat::new().await?).unwrap();
 
     tokio::spawn(async {
         tokio::time::sleep(Duration::from_secs(5)).await;
@@ -86,7 +92,13 @@ async fn main() -> Result<()> {
 
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {
-        engine.load(&QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/main.qml"));
+        if !rachat().data_store().has_client().await {
+            engine.load(&QUrl::from(
+                "qrc:/qt/qml/rs/chir/rachat/qml/select-homeserver.qml",
+            ));
+        } else {
+            engine.load(&QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/main.qml"));
+        }
     }
 
     // Start the app

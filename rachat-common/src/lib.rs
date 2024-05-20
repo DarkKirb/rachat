@@ -4,13 +4,10 @@
 
 use anyhow::{Context, Result};
 use directories_next::ProjectDirs;
-use reqwest::{Response, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_dhall::StaticType;
-use serde_json::Value;
-use std::{future::Future, sync::Arc, time::Duration};
+use std::sync::Arc;
 use tokio::fs;
-use tracing::instrument;
 
 pub mod crypto;
 pub mod data_store;
@@ -71,5 +68,11 @@ impl Rachat {
         let config = Config::read(&project_dirs).await?;
         let data_store = data_store::DataStore::new(&project_dirs, &config.default_profile).await?;
         Ok(Arc::new(Self { data_store, config }))
+    }
+
+    /// Returns a handle to the data store
+    #[must_use]
+    pub fn data_store(&self) -> Arc<data_store::DataStore> {
+        Arc::clone(&self.data_store)
     }
 }
