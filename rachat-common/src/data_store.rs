@@ -1,3 +1,6 @@
+//! Backing datastore for the client
+//!
+//! Frontend code renders values from this module
 use anyhow::Result;
 use directories_next::ProjectDirs;
 use matrix_sdk::config::StoreConfig;
@@ -8,14 +11,20 @@ use tracing::instrument;
 use crate::crypto::KDFSecretKey;
 
 #[derive(Clone, Debug)]
+/// Backing datastore for the client
 pub struct DataStore {
+    /// The root key for the key hierarchy.
     root_key: KDFSecretKey,
+    /// Path to the data directory
     data_dir: PathBuf,
+    /// Path to the cache directory
     cache_dir: PathBuf,
+    /// matrix-rust-sdk store config
     store_config: StoreConfig,
 }
 
 impl DataStore {
+    /// Creates a new data store
     #[instrument]
     pub async fn new(project_dirs: &ProjectDirs, profile: &str) -> Result<Arc<Self>> {
         let mut data_dir = project_dirs.data_dir().join(profile);

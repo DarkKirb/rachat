@@ -1,3 +1,4 @@
+//! Root cryptography module
 use std::fmt::{Debug, Display};
 
 use anyhow::Result;

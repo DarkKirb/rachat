@@ -5,13 +5,14 @@
 use anyhow::{Context, Result};
 use directories_next::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use serde_dhall::StaticType;
 use std::sync::Arc;
 use tokio::fs;
 
 pub mod crypto;
 pub mod data_store;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, StaticType)]
 #[serde(default)]
 pub struct Config {
     pub default_profile: String,
@@ -27,19 +28,26 @@ impl Default for Config {
 
 impl Config {
     pub async fn read(project_dirs: &ProjectDirs) -> Result<Self> {
-        let config_path = project_dirs.config_dir().join("config.json");
+        let config_path = project_dirs.config_dir().join("config.dhall");
         let config: Self = if config_path.exists() {
             let config_str = fs::read_to_string(&config_path)
                 .await
                 .context("Reading the configuration file")?;
-            serde_json::from_str(&config_str).context("Parsing the configuration file")?
+            serde_dhall::from_str(&config_str)
+                .parse()
+                .context("Parsing the configuration file")?
         } else {
             Self::default()
         };
         // Rewrite the configuration file
-        fs::write(config_path, serde_json::to_string(&config)?)
-            .await
-            .context("Creating the default configuration file")?;
+        fs::write(
+            config_path,
+            serde_dhall::serialize(&config)
+                .static_type_annotation()
+                .to_string()?,
+        )
+        .await
+        .context("Creating the default configuration file")?;
         Ok(config)
     }
 }
