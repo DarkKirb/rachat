@@ -36,7 +36,7 @@ jobs:
           toolchain: ${{ matrix.rust }}
           override: true
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.7.0
       - uses: actions-rs/cargo@v1
@@ -61,7 +61,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.7.0
       - uses: actions-rs/cargo@v1
@@ -112,7 +112,7 @@ jobs:
           override: true
           components: clippy
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.7.0
       - uses: actions-rs/cargo@v1
@@ -144,7 +144,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.7.0
       - uses: actions-rs/cargo@v1
@@ -191,7 +191,7 @@ jobs:
           toolchain: stable
           override: true
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           version: 6.7.0
       - uses: actions-rs/cargo@v1
