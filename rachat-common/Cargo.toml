@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.83"
+anyhow = "1.0.86"
 blake3 = { version = "1.5.1", features = ["rayon"] }
 directories-next = "2.0.0"
 keyring = "2.3.3"
