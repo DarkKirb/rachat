@@ -1,6 +1,6 @@
 use core::pin::Pin;
 use cxx_qt::Threading;
-use cxx_qt_lib::QString;
+use cxx_qt_lib::{QString, QUrl};
 use tracing::warn;
 
 #[derive(Default)]
@@ -31,6 +31,14 @@ impl crate::cxxqt_object::qobject::SelectHomeserver {
                     .queue(move |root_window| {
                         let error_msg = format!("Failed to set homeserver: {e}");
                         root_window.set_error_string(QString::from(&error_msg));
+                    })
+                    .unwrap();
+            } else {
+                thread
+                    .queue(move |root_window| {
+                        /*root_window
+                        .set_next_url(QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/main.qml"))*/
+                        // TODO
                     })
                     .unwrap();
             }

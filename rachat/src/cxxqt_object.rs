@@ -6,6 +6,9 @@ pub mod qobject {
         include!("cxx-qt-lib/qstring.h");
         /// An alias to the QString type
         type QString = cxx_qt_lib::QString;
+        include!("cxx-qt-lib/qurl.h");
+        /// An alias to the QString type
+        type QUrl = cxx_qt_lib::QUrl;
     }
 
     unsafe extern "RustQt" {
@@ -15,6 +18,7 @@ pub mod qobject {
         #[qobject]
         #[qml_element]
         #[qproperty(QString, title_string)]
+        #[qproperty(QUrl, next_url)]
         type RootWindow = super::RootWindowRust;
 
         #[qobject]
@@ -37,20 +41,29 @@ pub mod qobject {
 
 use core::pin::Pin;
 use cxx_qt::{Initialize, Threading};
-use cxx_qt_lib::QString;
+use cxx_qt_lib::{QString, QUrl};
 
 /// The Rust struct for the QObject
 #[derive(Default)]
 pub struct RootWindowRust {
     title_string: QString,
+    next_url: QUrl,
 }
-
-impl qobject::RootWindow {}
 
 impl Initialize for qobject::RootWindow {
     fn initialize(self: Pin<&mut Self>) {
         let thread = self.qt_thread();
         crate::APP_STATE.set_root_window(thread);
+        tokio::spawn(async move {
+            if !crate::rachat().data_store().has_client().await {
+                crate::APP_STATE.with_root_window(|root_window| {
+                    root_window.set_next_url(QUrl::from(
+                        "qrc:/qt/qml/rs/chir/rachat/qml/select-homeserver.qml",
+                    ));
+                })?;
+            }
+            Ok::<(), anyhow::Error>(())
+        });
     }
 }
 

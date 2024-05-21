@@ -15,5 +15,11 @@ ApplicationWindow {
     RootWindow {
         id: rootWindow
         titleString: qsTr("Select Profile")
+        onNextUrlChanged: loader.source = rootWindow.nextUrl
+    }
+
+    Loader {
+        id: loader
+        anchors.fill: parent
     }
 }

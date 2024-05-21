@@ -92,13 +92,14 @@ async fn main() -> Result<()> {
 
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {
-        if !rachat().data_store().has_client().await {
+        engine.load(&QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/root.qml"));
+        /*if !rachat().data_store().has_client().await {
             engine.load(&QUrl::from(
                 "qrc:/qt/qml/rs/chir/rachat/qml/select-homeserver.qml",
             ));
         } else {
-            engine.load(&QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/main.qml"));
-        }
+
+        }*/
     }
 
     // Start the app

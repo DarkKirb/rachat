@@ -1,16 +1,9 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.12
-import QtQuick.Layouts 2.12
-import QtQuick.Window 2.12
 
 import rs.chir.rachat 1.0
 
-ApplicationWindow {
-    height: 480
-    title: qsTr("Select Homeserver — Rachat")
-    visible: true
-    width: 640
-
+Item {
     SelectHomeserver {
         id: selectHomeserver
         errorString: "Please enter a homeserver name."
