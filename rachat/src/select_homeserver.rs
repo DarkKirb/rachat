@@ -1,14 +1,25 @@
 use core::pin::Pin;
-use cxx_qt::Threading;
-use cxx_qt_lib::{QString, QUrl};
-use tracing::warn;
+use cxx_qt::{Initialize, Threading};
+use cxx_qt_lib::QString;
+use tracing::{error, instrument, warn};
+
+pub use crate::cxxqt_object::qobject::SelectHomeserver;
 
 #[derive(Default)]
 pub struct SelectHomeserverRust {
     pub error_string: QString,
 }
 
-impl crate::cxxqt_object::qobject::SelectHomeserver {
+impl Initialize for SelectHomeserver {
+    #[instrument(skip(self))]
+    fn initialize(self: Pin<&mut Self>) {
+        if let Err(e) = crate::APP_STATE.set_window_title("Select Homeserver") {
+            error!("Failed to set window title: {e:?}");
+        }
+    }
+}
+
+impl SelectHomeserver {
     pub fn on_homeserver_text_changed(self: Pin<&mut Self>, homeserver: QString) {
         let homeserver = homeserver.to_string();
         if !crate::rachat()

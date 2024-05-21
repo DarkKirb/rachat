@@ -1,7 +1,7 @@
 pub mod cxxqt_object;
 pub mod select_homeserver;
 
-use std::{env, pin::Pin, sync::Arc, time::Duration};
+use std::{env, fmt::Debug, pin::Pin, sync::Arc, time::Duration};
 
 use anyhow::Result;
 use cxx_qt::CxxQtThread;
@@ -11,6 +11,7 @@ use once_cell::sync::{Lazy, OnceCell};
 use parking_lot::Mutex;
 use rachat_common::Rachat;
 use serde::{Deserialize, Serialize};
+use tracing::{debug, info, info_span, instrument, warn};
 
 pub struct AppState {
     root_window: Mutex<Option<CxxQtThread<RootWindow>>>,
@@ -27,23 +28,48 @@ impl AppState {
     where
         F: FnOnce(Pin<&mut RootWindow>) + Send + 'static,
     {
+        debug!("Requesting root window");
         let queue = self.root_window.lock();
         if let Some(w) = queue.as_ref() {
             w.queue(f)?;
+        } else {
+            warn!("Lost event due to missing root window");
         }
         Ok(())
     }
 
     pub fn set_root_window(&self, w: CxxQtThread<RootWindow>) {
+        info!("Setting root window");
         *self.root_window.lock() = Some(w);
     }
 
     pub fn remove_root_window(&self) {
         *self.root_window.lock() = None;
     }
+
+    /// Sets the window title asynchronously.
+    pub fn set_window_title<S>(&self, title: S) -> Result<()>
+    where
+        S: Into<QString> + AsRef<str> + Send + 'static,
+    {
+        let span = info_span!("set_window_title", title = title.as_ref());
+        let span2 = span.clone();
+        let _guard = span2.enter();
+        self.with_root_window(move |root_window| {
+            let _guard = span.enter();
+            root_window.set_title_string(title.into());
+        })?;
+        Ok(())
+    }
 }
 
-static APP_STATE: Lazy<AppState> = Lazy::new(AppState::new);
+impl Default for AppState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+static APP_STATE: Lazy<AppState> = Lazy::new(Default::default);
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
@@ -93,13 +119,6 @@ async fn main() -> Result<()> {
     // Load the QML path into the engine
     if let Some(engine) = engine.as_mut() {
         engine.load(&QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/root.qml"));
-        /*if !rachat().data_store().has_client().await {
-            engine.load(&QUrl::from(
-                "qrc:/qt/qml/rs/chir/rachat/qml/select-homeserver.qml",
-            ));
-        } else {
-
-        }*/
     }
 
     // Start the app

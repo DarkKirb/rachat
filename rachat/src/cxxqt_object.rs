@@ -30,6 +30,7 @@ pub mod qobject {
     impl cxx_qt::Threading for RootWindow {}
     impl cxx_qt::Constructor<()> for RootWindow {}
     impl cxx_qt::Threading for SelectHomeserver {}
+    impl cxx_qt::Constructor<()> for SelectHomeserver {}
 
     unsafe extern "RustQt" {
         #[qinvokable]
