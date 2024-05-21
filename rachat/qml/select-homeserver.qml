@@ -13,6 +13,7 @@ ApplicationWindow {
 
     SelectHomeserver {
         id: selectHomeserver
+        errorString: "Please enter a homeserver name."
     }
 
     Label {
@@ -22,30 +23,45 @@ ApplicationWindow {
         anchors.horizontalCenter: parent.horizontalCenter
         font.pixelSize: 48
         wrapMode: Text.Wrap
+        padding: 16
     }
     Label {
         id: serverEntryTitleLabel
         text: qsTr("Before you can start chatting, you need to select which server you are using.")
         anchors.top: welcomeLabel.bottom
         wrapMode: Text.Wrap
+        padding: 8
     }
     Label {
         id: serverEntryDescriptionLabel
         text: qsTr("Server name:")
-        anchors.top: serverEntryTitleLabel.bottom
+        anchors.bottom: serverField.bottom
         anchors.left: parent.left
+        padding: 8
     }
     TextField {
         id: serverField
         placeholderText: 'matrix.example'
         anchors.left: serverEntryDescriptionLabel.right
-        anchors.top: serverEntryDescriptionLabel.top
+        anchors.top: serverEntryTitleLabel.bottom
+        padding: 8
+        onTextChanged: selectHomeserver.onHomeserverTextChanged(serverField.text)
     }
     Button {
         id: selectButton
         text: qsTr("Select")
-        anchors.horizontalCenter: serverField.left
+        anchors.left: parent.left
         anchors.top: serverField.bottom
         onClicked: selectHomeserver.selectHomeserver(serverField.text)
+        padding: 8
+        enabled: selectHomeserver.errorString.length == 0
+    }
+    Label {
+        text: selectHomeserver.errorString
+        visible: selectHomeserver.errorString.length > 0
+        anchors.left: selectButton.right
+        anchors.bottom: selectButton.bottom
+        padding: 8
+        wrapMode: Text.Wrap
     }
 }

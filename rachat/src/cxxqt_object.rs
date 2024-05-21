@@ -19,15 +19,19 @@ pub mod qobject {
 
         #[qobject]
         #[qml_element]
+        #[qproperty(QString, error_string)]
         type SelectHomeserver = super::SelectHomeserverRust;
     }
 
     impl cxx_qt::Threading for RootWindow {}
     impl cxx_qt::Constructor<()> for RootWindow {}
+    impl cxx_qt::Threading for SelectHomeserver {}
 
     unsafe extern "RustQt" {
         #[qinvokable]
         fn select_homeserver(self: &SelectHomeserver, homeserver: QString);
+        #[qinvokable]
+        fn on_homeserver_text_changed(self: Pin<&mut SelectHomeserver>, homeserver: QString);
     }
 }
 

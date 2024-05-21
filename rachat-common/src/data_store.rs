@@ -95,6 +95,10 @@ impl DataStore {
         self.client.read().await.is_some()
     }
 
+    pub fn is_valid_homeserver_name(&self, server_name: &str) -> bool {
+        ServerName::parse(server_name).is_ok()
+    }
+
     /// Sets the homeserver for this profile
     pub async fn set_homeserver(&self, server_name: &str) -> Result<()> {
         let server_name = ServerName::parse(server_name)?;
@@ -106,13 +110,6 @@ impl DataStore {
                 server_name: server_name.clone(),
             });
         }
-        tokio::fs::write(
-            self.config_dir.join("config.json"),
-            serde_json::to_string(&*config)?,
-        )
-        .await?;
-
-        drop(config);
 
         let secret = self.root_key.subkey_passphrase("matrix-rust-sdk");
 
@@ -128,6 +125,14 @@ impl DataStore {
                 .build()
                 .await?,
         );
+
+        tokio::fs::write(
+            self.config_dir.join("config.json"),
+            serde_json::to_string(&*config)?,
+        )
+        .await?;
+
+        drop(config);
 
         Ok(())
     }
