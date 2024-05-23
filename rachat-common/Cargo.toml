@@ -6,6 +6,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.83"
 blake3 = { version = "1.5.1", features = ["rayon"] }
+chacha20poly1305 = "0.10.1"
+ciborium = "0.2.2"
 directories-next = "2.0.0"
 educe = "0.5.11"
 keyring = "2.3.3"
@@ -21,7 +23,11 @@ matrix-sdk = { version = "0.7.1", default-features = false, features = [
 matrix-sdk-sqlite = { version = "0.7.0", features = ["crypto-store"] }
 rand = "0.8.5"
 rand_chacha = { version = "0.3.1", features = ["simd"] }
-reqwest = { version = "0.12.4", default-features = false, features = ["http2", "json", "rustls-tls"] }
+reqwest = { version = "0.12.4", default-features = false, features = [
+    "http2",
+    "json",
+    "rustls-tls",
+] }
 secrecy = { version = "0.8.0", features = ["serde"] }
 serde = { version = "1.0.202", features = ["derive"] }
 serde_dhall = { version = "0.12.1", default-features = false }
@@ -46,3 +52,4 @@ expect-used = "deny"
 
 [target.x86_64-pc-windows-msvc.dependencies]
 libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
+safe-transmute = "0.11.3"

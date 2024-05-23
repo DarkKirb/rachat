@@ -1,10 +1,18 @@
 //! Root cryptography module
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    path::Path,
+};
 
 use anyhow::Result;
 use keyring::Entry;
 use rand::{distributions::Alphanumeric, CryptoRng, Rng, SeedableRng};
 use secrecy::{ExposeSecret, Secret, Zeroize};
+
+use self::mutable_file::MutableFile;
+
+pub mod mutable_file;
+
 /// 256 bit key derivation key. This is used as the IKM of a KDF.
 #[derive(Clone, Debug)]
 pub struct KDFSecretKey(Secret<[u8; 32]>);
@@ -93,6 +101,29 @@ impl KDFSecretKey {
         let mut key = serde_json::from_str(&secret_json)?;
         secret_json.zeroize();
         Ok(Self::from_bytes(&mut key))
+    }
+
+    /// Returns a handle to a mutable data file
+    ///
+    /// This data file will be encrypted on disk
+    pub fn open_mutable_file(
+        &self,
+        data_path: impl AsRef<Path>,
+        subdir: impl AsRef<Path>,
+    ) -> MutableFile {
+        let subdir = subdir.as_ref();
+        let subdir_key_id = crate::utils::path_to_bytes(subdir)
+            .into_iter()
+            .map(|c| c as char)
+            .collect::<String>();
+        let context = format!("rs.chir.rachat.crypto.file: {subdir_key_id}");
+        let mut blake_key = blake3::derive_key(&context, self.0.expose_secret());
+        let res = MutableFile {
+            path: data_path.as_ref().join(subdir_key_id),
+            secret_key: chacha20poly1305::Key::from(blake_key),
+        };
+        blake_key.zeroize();
+        res
     }
 }
 

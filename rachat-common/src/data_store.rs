@@ -4,14 +4,18 @@
 use anyhow::{Ok, Result};
 use directories_next::ProjectDirs;
 use educe::Educe;
-use matrix_sdk::{Client, OwnedServerName, ServerName};
+use matrix_sdk::{matrix_auth::MatrixSession, Client, OwnedServerName, ServerName};
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    future::Future,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::sync::RwLock;
 use tracing::instrument;
 
-use crate::crypto::KDFSecretKey;
+use crate::crypto::{mutable_file::MutableFile, KDFSecretKey};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 /// Configuration for a single profile
@@ -35,7 +39,7 @@ pub struct DataStore {
     /// Path to the cache directory
     cache_dir: PathBuf,
     /// Matrix client, may not exist at startup
-    client: RwLock<Option<Client>>,
+    client: RwLock<Option<Arc<Client>>>,
 }
 
 impl DataStore {
@@ -86,13 +90,28 @@ impl DataStore {
             config: RwLock::new(config),
             data_dir,
             cache_dir,
-            client: RwLock::new(client),
+            client: RwLock::new(client.map(Arc::new)),
         }))
     }
 
     /// Returns true if a client has been initialized for this profile
     pub async fn has_client(&self) -> bool {
         self.client.read().await.is_some()
+    }
+
+    /// Runs an async closure with the client
+    ///
+    /// # Errors
+    /// This function will only return errors if the passed closure does.
+    pub async fn with_client<F, Fut, Ret>(&self, fun: F) -> Result<Option<Ret>>
+    where
+        F: FnOnce(Arc<Client>) -> Fut + Send,
+        Fut: Future<Output = Result<Ret>> + Send,
+    {
+        if let Some(ref client) = *self.client.read().await {
+            return Ok(Some(fun(Arc::clone(client)).await?));
+        }
+        Ok(None)
     }
 
     pub fn is_valid_homeserver_name(&self, server_name: &str) -> bool {
@@ -113,18 +132,29 @@ impl DataStore {
 
         let secret = self.root_key.subkey_passphrase("matrix-rust-sdk");
 
-        *self.client.write().await = Some(
-            Client::builder()
-                .server_name(server_name.as_ref())
-                .sqlite_store(
-                    &self.data_dir.join("matrix.db"),
-                    Some(secret.expose_secret().as_str()),
-                )
-                .user_agent("rachat")
-                .handle_refresh_tokens()
-                .build()
-                .await?,
-        );
+        let client = Client::builder()
+            .server_name(server_name.as_ref())
+            .sqlite_store(
+                &self.data_dir.join("matrix.db"),
+                Some(secret.expose_secret().as_str()),
+            )
+            .user_agent("rachat")
+            .handle_refresh_tokens()
+            .build()
+            .await?;
+
+        // Restore the login session if it exists
+        if let Some(session_data) = self
+            .root_key
+            .open_mutable_file(&self.data_dir, "auth/login")
+            .read()
+            .await?
+        {
+            let client_session: MatrixSession = ciborium::de::from_reader(session_data.as_slice())?;
+            client.restore_session(client_session).await?;
+        }
+
+        *self.client.write().await = Some(Arc::new(client));
 
         tokio::fs::write(
             self.config_dir.join("config.json"),
@@ -135,5 +165,12 @@ impl DataStore {
         drop(config);
 
         Ok(())
+    }
+
+    /// Returns a handle to a mutable data file
+    ///
+    /// This data will be encrypted on disk
+    pub fn open_mutable_file(&self, path: impl AsRef<Path>) -> MutableFile {
+        self.root_key.open_mutable_file(&self.data_dir, path)
     }
 }

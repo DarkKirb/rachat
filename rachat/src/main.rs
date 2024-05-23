@@ -1,4 +1,6 @@
 pub mod cxxqt_object;
+pub mod login_window;
+pub mod pages;
 pub mod select_homeserver;
 
 use std::{env, fmt::Debug, pin::Pin, sync::Arc, time::Duration};
@@ -8,6 +10,7 @@ use cxx_qt::CxxQtThread;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QString, QUrl};
 use cxxqt_object::qobject::RootWindow;
 use once_cell::sync::{Lazy, OnceCell};
+use pages::RachatPages;
 use parking_lot::Mutex;
 use rachat_common::Rachat;
 use serde::{Deserialize, Serialize};
@@ -61,6 +64,21 @@ impl AppState {
         })?;
         Ok(())
     }
+
+    /// Navigate to the given URL asynchronously.
+    pub fn navigate<S>(&self, url: S) -> Result<()>
+    where
+        S: Into<QUrl> + AsRef<str> + Send + 'static,
+    {
+        let span = info_span!("navigate", url = url.as_ref());
+        let span2 = span.clone();
+        let _guard = span2.enter();
+        self.with_root_window(move |root_window| {
+            let _guard = span.enter();
+            root_window.set_next_url(url.into());
+        })?;
+        Ok(())
+    }
 }
 
 impl Default for AppState {
@@ -105,25 +123,27 @@ async fn main() -> Result<()> {
             .unwrap();
     });
 
-    // Create the application and engine
-    let mut app = QGuiApplication::new();
-    // bug workaround for missing dark theme on windows
-    #[cfg(windows)]
-    {
-        if env::var("QT_QUICK_CONTROLS_STYLE").is_err() {
-            env::set_var("QT_QUICK_CONTROLS_STYLE", "Fusion");
-        }
-    }
-    let mut engine = QQmlApplicationEngine::new();
-
-    // Load the QML path into the engine
-    if let Some(engine) = engine.as_mut() {
-        engine.load(&QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/root.qml"));
-    }
-
     // Start the app
-    if let Some(app) = app.as_mut() {
-        app.exec();
-    }
+    tokio::task::spawn_blocking(|| {
+        // Create the application and engine
+        let mut app = QGuiApplication::new();
+        // bug workaround for missing dark theme on windows
+        #[cfg(windows)]
+        {
+            if env::var("QT_QUICK_CONTROLS_STYLE").is_err() {
+                env::set_var("QT_QUICK_CONTROLS_STYLE", "Fusion");
+            }
+        }
+        let mut engine = QQmlApplicationEngine::new();
+
+        // Load the QML path into the engine
+        if let Some(engine) = engine.as_mut() {
+            engine.load(&RachatPages::Root.into());
+        }
+        if let Some(app) = app.as_mut() {
+            app.exec();
+        }
+    })
+    .await?;
     Ok(())
 }

@@ -4,6 +4,7 @@ use cxx_qt_lib::QString;
 use tracing::{error, instrument, warn};
 
 pub use crate::cxxqt_object::qobject::SelectHomeserver;
+use crate::{pages::RachatPages, APP_STATE};
 
 #[derive(Default)]
 pub struct SelectHomeserverRust {
@@ -38,21 +39,14 @@ impl SelectHomeserver {
             let data_store = crate::rachat().data_store();
             if let Err(e) = data_store.set_homeserver(&homeserver).await {
                 warn!("Failed to set homeserver: {e:?}");
-                thread
-                    .queue(move |root_window| {
-                        let error_msg = format!("Failed to set homeserver: {e}");
-                        root_window.set_error_string(QString::from(&error_msg));
-                    })
-                    .unwrap();
+                thread.queue(move |root_window| {
+                    let error_msg = format!("Failed to set homeserver: {e}");
+                    root_window.set_error_string(QString::from(&error_msg));
+                })?;
             } else {
-                thread
-                    .queue(move |root_window| {
-                        /*root_window
-                        .set_next_url(QUrl::from("qrc:/qt/qml/rs/chir/rachat/qml/main.qml"))*/
-                        // TODO
-                    })
-                    .unwrap();
+                APP_STATE.navigate(RachatPages::Login)?;
             }
+            Ok::<(), anyhow::Error>(())
         });
     }
 }

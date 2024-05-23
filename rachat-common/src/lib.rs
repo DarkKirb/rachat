@@ -11,6 +11,7 @@ use tokio::fs;
 
 pub mod crypto;
 pub mod data_store;
+pub(crate) mod utils;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, StaticType)]
 #[serde(default)]

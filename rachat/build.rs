@@ -11,7 +11,7 @@ fn main() {
         .qml_module(QmlModule {
             uri: "rs.chir.rachat",
             rust_files: &["src/cxxqt_object.rs"],
-            qml_files: &["qml/root.qml", "qml/select-homeserver.qml"],
+            qml_files: &["qml/root.qml", "qml/select-homeserver.qml", "qml/login.qml"],
             ..Default::default()
         })
         .build();

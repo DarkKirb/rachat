@@ -25,12 +25,19 @@ pub mod qobject {
         #[qml_element]
         #[qproperty(QString, error_string)]
         type SelectHomeserver = super::SelectHomeserverRust;
+
+        #[qobject]
+        #[qml_element]
+        #[qproperty(QString, homeserver)]
+        type LoginWindow = super::LoginWindowRust;
     }
 
     impl cxx_qt::Threading for RootWindow {}
     impl cxx_qt::Constructor<()> for RootWindow {}
     impl cxx_qt::Threading for SelectHomeserver {}
     impl cxx_qt::Constructor<()> for SelectHomeserver {}
+    impl cxx_qt::Threading for LoginWindow {}
+    impl cxx_qt::Constructor<()> for LoginWindow {}
 
     unsafe extern "RustQt" {
         #[qinvokable]
@@ -56,12 +63,20 @@ impl Initialize for qobject::RootWindow {
         let thread = self.qt_thread();
         crate::APP_STATE.set_root_window(thread);
         tokio::spawn(async move {
-            if !crate::rachat().data_store().has_client().await {
-                crate::APP_STATE.with_root_window(|root_window| {
-                    root_window.set_next_url(QUrl::from(
-                        "qrc:/qt/qml/rs/chir/rachat/qml/select-homeserver.qml",
-                    ));
-                })?;
+            let has_no_client = rachat()
+                .data_store()
+                .with_client(|client| async move {
+                    if !client.logged_in() {
+                        APP_STATE.navigate(RachatPages::Login)?;
+                    } else {
+                        todo!();
+                    }
+                    Ok(())
+                })
+                .await?
+                .is_none();
+            if has_no_client {
+                APP_STATE.navigate(RachatPages::SelectHomeserver)?;
             }
             Ok::<(), anyhow::Error>(())
         });
@@ -75,4 +90,5 @@ impl Drop for RootWindowRust {
     }
 }
 
-pub use crate::select_homeserver::SelectHomeserverRust;
+pub use crate::{login_window::LoginWindowRust, select_homeserver::SelectHomeserverRust};
+use crate::{pages::RachatPages, rachat, APP_STATE};
