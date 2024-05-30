@@ -22,12 +22,15 @@ use tokio::{
 };
 
 #[derive(Error, Diagnostic, Debug)]
+/// Errors that can occur during mutable file access.
 pub enum MutableFileError {
     #[error("IO Error during mutable file access.")]
     #[diagnostic(code(rachat_common::crypto::mutable_file::io_error))]
+    /// The file failed to read or write
     IoError(#[from] tokio::io::Error),
     #[error("Cryptographic error. The file may have been corrupted.")]
     #[diagnostic(code(rachat_common::crypto::mutable_file::crypto_error))]
+    /// The file could not have been decrypted. This could be because there was corruption or malicious tampering.
     CryptoError(#[from] chacha20poly1305::aead::Error),
 }
 

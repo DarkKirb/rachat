@@ -3,7 +3,7 @@ pub mod login_window;
 pub mod pages;
 pub mod select_homeserver;
 
-use std::{env, fmt::Debug, pin::Pin, sync::Arc, time::Duration};
+use std::{fmt::Debug, pin::Pin, sync::Arc, time::Duration};
 
 use cxx_qt::CxxQtThread;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QString, QUrl};
@@ -14,7 +14,7 @@ use pages::RachatPages;
 use parking_lot::Mutex;
 use rachat_common::Rachat;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, info, info_span, instrument, warn};
+use tracing::{debug, info, info_span, warn};
 
 pub struct AppState {
     root_window: Mutex<Option<CxxQtThread<RootWindow>>>,

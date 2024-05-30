@@ -15,15 +15,19 @@ use self::mutable_file::MutableFile;
 pub mod mutable_file;
 
 #[derive(Error, Diagnostic, Debug)]
+/// Errors that can occur during KDF secret key operations
 pub enum KDFSecretKeyError {
     #[error("Error trying to access the keyring")]
     #[diagnostic(code(rachat_common::crypto::keyring_error))]
+    /// This error is returned if the keyring operation fails, for example if the keyring is locked or access was denied.
     KeyringError(#[from] keyring::Error),
     #[error("Error trying to join synchronous task")]
     #[diagnostic(code(rachat_common::crypto::join_error))]
+    /// This error is returned if the task for accessing the keyring fails to join, for example if it has been cancelled or panicked.
     JoinError(#[from] tokio::task::JoinError),
     #[error("Error trying to serialize/deserialize the keyring entry")]
     #[diagnostic(code(rachat_common::crypto::keyring_serialization_error))]
+    /// This error is returned if the data stored in the keyring is corrupted.
     SerializationError(#[from] serde_json::Error),
 }
 

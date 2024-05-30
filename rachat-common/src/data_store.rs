@@ -22,30 +22,39 @@ use crate::crypto::{
 };
 
 #[derive(Error, Diagnostic, Debug)]
+/// Errors that occur when accessing the data store.
 pub enum DataStoreError {
     #[error("KDF Secret Key Error")]
     #[diagnostic(code(rachat_common::crypto::data_store::kdf_secret_key))]
+    /// There has been an errror with the KDF secret key
     KDFSecretKeyError(#[from] KDFSecretKeyError),
     #[error("IO Error")]
     #[diagnostic(code(rachat_common::crypto::mutable_file::io_error))]
+    /// There has been an IO error accessing some configuration file
     IoError(#[from] tokio::io::Error),
     #[error("Client Build Error")]
     #[diagnostic(code(rachat_common::crypto::data_store::client_build_error))]
+    /// The matrix client failed to build
     ClientBuilderError(#[from] matrix_sdk::ClientBuildError),
     #[error("ID parse error")]
     #[diagnostic(code(rachat_common::crypto::data_store::id_parse))]
+    /// The specified server ID could not be parsed.
     IdParse(#[from] matrix_sdk::IdParseError),
     #[error("MutableFileError")]
     #[diagnostic(code(rachat_common::crypto::data_store::mutable_file_error))]
+    /// A mutable file could not be accessed.
     MutableFileError(#[from] MutableFileError),
     #[error("CBOR Seriallization error")]
     #[diagnostic(code(rachat_common::crypto::data_store::cbor_serialization))]
+    /// CBOR serialized data failed to deserialize
     CBORSerializationError(#[from] ciborium::de::Error<std::io::Error>),
     #[error("Matrix SDK Error")]
     #[diagnostic(code(rachat_common::crypto::data_store::matrix_sdk))]
+    /// There was an error with the Matrix SDK
     MatrixSdkError(#[from] matrix_sdk::Error),
     #[error("JSON Serialization error")]
     #[diagnostic(code(rachat_common::crypto::data_store::json_serialization))]
+    /// JSON serialized data failed to deserialize
     JSONSerializationError(#[from] serde_json::Error),
 }
 
@@ -107,7 +116,7 @@ impl DataStore {
                 Client::builder()
                     .server_name(config.server_name.as_ref())
                     .sqlite_store(
-                        &data_dir.join("matrix.db"),
+                        data_dir.join("matrix.db"),
                         Some(secret.expose_secret().as_str()),
                     )
                     .user_agent("rachat")
@@ -150,12 +159,25 @@ impl DataStore {
         Ok(None)
     }
 
-    pub fn is_valid_homeserver_name(&self, server_name: &str) -> bool {
+    /// Returns whether a name is a valid homeserver name
+    #[must_use]
+    pub fn is_valid_homeserver_name(server_name: impl AsRef<str>) -> bool {
         ServerName::parse(server_name).is_ok()
     }
 
     /// Sets the homeserver for this profile
-    pub async fn set_homeserver(&self, server_name: &str) -> Result<(), DataStoreError> {
+    ///
+    /// # Errors
+    /// This function will return an error in the following cases:
+    ///
+    /// - The homeserver name is invalid
+    /// - The homeserver is invalid or not online
+    /// - Existing session data could not be loaded from disk
+    /// - The profile configuration file could not be updated
+    pub async fn set_homeserver(
+        &self,
+        server_name: impl AsRef<str> + Send,
+    ) -> Result<(), DataStoreError> {
         let server_name = ServerName::parse(server_name)?;
         let mut config = self.config.write().await;
         if let Some(config) = config.as_mut() {
@@ -171,7 +193,7 @@ impl DataStore {
         let client = Client::builder()
             .server_name(server_name.as_ref())
             .sqlite_store(
-                &self.data_dir.join("matrix.db"),
+                self.data_dir.join("matrix.db"),
                 Some(secret.expose_secret().as_str()),
             )
             .user_agent("rachat")

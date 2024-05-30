@@ -50,6 +50,7 @@ str-to-string = "warn"
 todo = "deny"
 unwrap-used = "deny"
 expect-used = "deny"
+module-name-repetitions = "allow"
 
 [target.x86_64-pc-windows-msvc.dependencies]
 libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
