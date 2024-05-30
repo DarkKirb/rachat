@@ -31,7 +31,7 @@ pub enum DataStoreError {
     IoError(#[from] tokio::io::Error),
     #[error("Client Build Error")]
     #[diagnostic(code(rachat_common::crypto::data_store::client_build_error))]
-    MatrixSdk(#[from] matrix_sdk::ClientBuildError),
+    ClientBuilderError(#[from] matrix_sdk::ClientBuildError),
     #[error("ID parse error")]
     #[diagnostic(code(rachat_common::crypto::data_store::id_parse))]
     IdParse(#[from] matrix_sdk::IdParseError),
