@@ -71,14 +71,14 @@ impl Initialize for qobject::RootWindow {
                     } else {
                         todo!();
                     }
-                    Ok(())
+                    Ok::<_, eyre::Error>(())
                 })
                 .await?
                 .is_none();
             if has_no_client {
                 APP_STATE.navigate(RachatPages::SelectHomeserver)?;
             }
-            Ok::<(), anyhow::Error>(())
+            Ok::<(), eyre::Error>(())
         });
     }
 }

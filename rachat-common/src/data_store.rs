@@ -1,10 +1,10 @@
 //! Backing datastore for the client
 //!
 //! Frontend code renders values from this module
-use anyhow::{Ok, Result};
 use directories_next::ProjectDirs;
 use educe::Educe;
 use matrix_sdk::{matrix_auth::MatrixSession, Client, OwnedServerName, ServerName};
+use miette::Diagnostic;
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -12,10 +12,42 @@ use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use thiserror::Error;
 use tokio::sync::RwLock;
 use tracing::instrument;
 
-use crate::crypto::{mutable_file::MutableFile, KDFSecretKey};
+use crate::crypto::{
+    mutable_file::{MutableFile, MutableFileError},
+    KDFSecretKey, KDFSecretKeyError,
+};
+
+#[derive(Error, Diagnostic, Debug)]
+pub enum DataStoreError {
+    #[error("KDF Secret Key Error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::kdf_secret_key))]
+    KDFSecretKeyError(#[from] KDFSecretKeyError),
+    #[error("IO Error")]
+    #[diagnostic(code(rachat_common::crypto::mutable_file::io_error))]
+    IoError(#[from] tokio::io::Error),
+    #[error("Client Build Error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::client_build_error))]
+    MatrixSdk(#[from] matrix_sdk::ClientBuildError),
+    #[error("ID parse error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::id_parse))]
+    IdParse(#[from] matrix_sdk::IdParseError),
+    #[error("MutableFileError")]
+    #[diagnostic(code(rachat_common::crypto::data_store::mutable_file_error))]
+    MutableFileError(#[from] MutableFileError),
+    #[error("CBOR Seriallization error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::cbor_serialization))]
+    CBORSerializationError(#[from] ciborium::de::Error<std::io::Error>),
+    #[error("Matrix SDK Error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::matrix_sdk))]
+    MatrixSdkError(#[from] matrix_sdk::Error),
+    #[error("JSON Serialization error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::json_serialization))]
+    JSONSerializationError(#[from] serde_json::Error),
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 /// Configuration for a single profile
@@ -45,7 +77,10 @@ pub struct DataStore {
 impl DataStore {
     /// Creates a new data store
     #[instrument]
-    pub async fn new(project_dirs: &ProjectDirs, profile: &str) -> Result<Arc<Self>> {
+    pub async fn new(
+        project_dirs: &ProjectDirs,
+        profile: &str,
+    ) -> Result<Arc<Self>, DataStoreError> {
         let config_dir = project_dirs.config_dir().join(profile);
         let mut data_dir = project_dirs.data_dir().join(profile);
         let mut cache_dir = project_dirs.cache_dir().join(profile);
@@ -103,10 +138,11 @@ impl DataStore {
     ///
     /// # Errors
     /// This function will only return errors if the passed closure does.
-    pub async fn with_client<F, Fut, Ret>(&self, fun: F) -> Result<Option<Ret>>
+    pub async fn with_client<F, Fut, Ret, E>(&self, fun: F) -> Result<Option<Ret>, E>
     where
         F: FnOnce(Arc<Client>) -> Fut + Send,
-        Fut: Future<Output = Result<Ret>> + Send,
+        Fut: Future<Output = Result<Ret, E>> + Send,
+        E: Send,
     {
         if let Some(ref client) = *self.client.read().await {
             return Ok(Some(fun(Arc::clone(client)).await?));
@@ -119,7 +155,7 @@ impl DataStore {
     }
 
     /// Sets the homeserver for this profile
-    pub async fn set_homeserver(&self, server_name: &str) -> Result<()> {
+    pub async fn set_homeserver(&self, server_name: &str) -> Result<(), DataStoreError> {
         let server_name = ServerName::parse(server_name)?;
         let mut config = self.config.write().await;
         if let Some(config) = config.as_mut() {

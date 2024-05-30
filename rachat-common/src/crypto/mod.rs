@@ -4,14 +4,28 @@ use std::{
     path::Path,
 };
 
-use anyhow::Result;
 use keyring::Entry;
+use miette::Diagnostic;
 use rand::{distributions::Alphanumeric, CryptoRng, Rng, SeedableRng};
 use secrecy::{ExposeSecret, Secret, Zeroize};
+use thiserror::Error;
 
 use self::mutable_file::MutableFile;
 
 pub mod mutable_file;
+
+#[derive(Error, Diagnostic, Debug)]
+pub enum KDFSecretKeyError {
+    #[error("Error trying to access the keyring")]
+    #[diagnostic(code(rachat_common::crypto::keyring_error))]
+    KeyringError(#[from] keyring::Error),
+    #[error("Error trying to join synchronous task")]
+    #[diagnostic(code(rachat_common::crypto::join_error))]
+    JoinError(#[from] tokio::task::JoinError),
+    #[error("Error trying to serialize/deserialize the keyring entry")]
+    #[diagnostic(code(rachat_common::crypto::keyring_serialization_error))]
+    SerializationError(#[from] serde_json::Error),
+}
 
 /// 256 bit key derivation key. This is used as the IKM of a KDF.
 #[derive(Clone, Debug)]
@@ -81,22 +95,25 @@ impl KDFSecretKey {
     /// - The keyring is closed
     /// - The user has rejected access to the keyring.
     /// - There is some sort of IO error preventing the keyring from working.
-    pub async fn load_from_keyring(profile: impl Display + Send) -> Result<Self> {
+    pub async fn load_from_keyring(
+        profile: impl Display + Send,
+    ) -> Result<Self, KDFSecretKeyError> {
         let profile = format!("{profile}");
-        let mut secret_json = tokio::task::spawn_blocking(move || -> Result<String> {
-            let entry = Entry::new("rs.chir.rachat", &format!("{profile}-key"))?;
-            match entry.get_password() {
-                Ok(entry) => Ok(entry),
-                Err(keyring::Error::NoEntry) => {
-                    let secret = Self::new();
-                    let secret_json = serde_json::to_string(secret.0.expose_secret())?;
-                    entry.set_password(&secret_json)?;
-                    Ok(secret_json)
+        let mut secret_json =
+            tokio::task::spawn_blocking(move || -> Result<String, KDFSecretKeyError> {
+                let entry = Entry::new("rs.chir.rachat", &format!("{profile}-key"))?;
+                match entry.get_password() {
+                    Ok(entry) => Ok(entry),
+                    Err(keyring::Error::NoEntry) => {
+                        let secret = Self::new();
+                        let secret_json = serde_json::to_string(secret.0.expose_secret())?;
+                        entry.set_password(&secret_json)?;
+                        Ok(secret_json)
+                    }
+                    Err(e) => Err(e.into()),
                 }
-                Err(e) => Err(anyhow::anyhow!(e)),
-            }
-        })
-        .await??;
+            })
+            .await??;
 
         let mut key = serde_json::from_str(&secret_json)?;
         secret_json.zeroize();

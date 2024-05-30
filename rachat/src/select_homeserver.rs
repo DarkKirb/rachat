@@ -46,7 +46,7 @@ impl SelectHomeserver {
             } else {
                 APP_STATE.navigate(RachatPages::Login)?;
             }
-            Ok::<(), anyhow::Error>(())
+            Ok::<(), eyre::Error>(())
         });
     }
 }

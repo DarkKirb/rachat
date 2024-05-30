@@ -19,7 +19,7 @@ impl Initialize for LoginWindow {
             match data_store
                 .with_client(|client| async move {
                     let homeserver = client.homeserver();
-                    Ok(homeserver.host_str().map(String::from))
+                    Ok::<_, eyre::Error>(homeserver.host_str().map(String::from))
                 })
                 .await
             {
@@ -37,7 +37,7 @@ impl Initialize for LoginWindow {
                     APP_STATE.navigate(RachatPages::SelectHomeserver)?;
                 }
             }
-            Ok::<(), anyhow::Error>(())
+            Ok::<(), eyre::Error>(())
         });
     }
 }

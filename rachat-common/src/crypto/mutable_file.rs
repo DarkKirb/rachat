@@ -8,17 +8,28 @@
 //!
 //!
 
-use anyhow::Result;
 use chacha20poly1305::{
     aead::{Aead, Payload},
     AeadCore, KeyInit, XChaCha20Poly1305, XNonce,
 };
+use miette::Diagnostic;
 use rand::thread_rng;
 use std::path::PathBuf;
+use thiserror::Error;
 use tokio::{
     fs,
     io::{AsyncReadExt, AsyncWriteExt},
 };
+
+#[derive(Error, Diagnostic, Debug)]
+pub enum MutableFileError {
+    #[error("IO Error during mutable file access.")]
+    #[diagnostic(code(rachat_common::crypto::mutable_file::io_error))]
+    IoError(#[from] tokio::io::Error),
+    #[error("Cryptographic error. The file may have been corrupted.")]
+    #[diagnostic(code(rachat_common::crypto::mutable_file::crypto_error))]
+    CryptoError(#[from] chacha20poly1305::aead::Error),
+}
 
 /// Reference to a mutable data file
 #[derive(Clone, Debug)]
@@ -34,7 +45,7 @@ impl MutableFile {
     ///
     /// # Errors
     /// This function will return an error if writing to the file fails.
-    pub async fn write(&self, data: impl AsRef<[u8]> + Send) -> Result<()> {
+    pub async fn write(&self, data: impl AsRef<[u8]> + Send) -> Result<(), MutableFileError> {
         if let Some(path) = self.path.parent() {
             fs::create_dir_all(path).await?;
         }
@@ -61,7 +72,7 @@ impl MutableFile {
     ///
     /// # Errors
     /// This function will return an error if reading from the file fails.
-    pub async fn read(&self) -> Result<Option<Vec<u8>>> {
+    pub async fn read(&self) -> Result<Option<Vec<u8>>, MutableFileError> {
         let mut file = match fs::OpenOptions::new().read(true).open(&self.path).await {
             Ok(file) => file,
             Err(e) => {

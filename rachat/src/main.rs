@@ -5,10 +5,10 @@ pub mod select_homeserver;
 
 use std::{env, fmt::Debug, pin::Pin, sync::Arc, time::Duration};
 
-use anyhow::Result;
 use cxx_qt::CxxQtThread;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QString, QUrl};
 use cxxqt_object::qobject::RootWindow;
+use eyre::Result;
 use once_cell::sync::{Lazy, OnceCell};
 use pages::RachatPages;
 use parking_lot::Mutex;
@@ -110,6 +110,7 @@ pub fn rachat() -> Arc<Rachat> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    color_eyre::install()?;
     tracing_subscriber::fmt::init();
 
     RACHAT.set(Rachat::new().await?).unwrap();
