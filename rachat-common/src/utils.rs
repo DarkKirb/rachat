@@ -13,7 +13,6 @@ pub fn path_to_bytes(path: impl AsRef<Path>) -> Vec<u8> {
 #[cfg(windows)]
 /// Converts a path to a stable bytewise representation
 pub fn path_to_bytes(path: impl AsRef<Path>) -> Vec<u8> {
-    use safe_transmute::to_bytes::transmute_to_bytes;
     use std::os::windows::ffi::OsStrExt;
 
     let path_buf = path
