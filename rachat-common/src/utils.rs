@@ -17,7 +17,11 @@ pub fn path_to_bytes(path: impl AsRef<Path>) -> Vec<u8> {
     use std::os::windows::ffi::OsStrExt;
 
     let path_buf = path.as_ref().as_os_str().encode_wide().collect::<Vec<u16>>();
-    transmute_to_bytes(&path_buf[..]).to_vec()
+    let mut out_buf = Vec::with_capacity(path_buf.len() * 2);
+    for wide_char in path_buf {
+        out_buf.extend_from_slice(&wide_char.to_le_bytes()[..]);
+    }
+    out_buf
 }
 
 

@@ -23,7 +23,7 @@ args @ {
   workspaceSrc,
   ignoreLockHash,
 }: let
-  nixifiedLockHash = "782df0fe24ac7efc1889d7174f2b91cf0c19c74b8b7a64ae149b5af3d1b367a8";
+  nixifiedLockHash = "5a66773fdc5a9e7cdb589abc6b91c0c86f3a83ef352b40506d4f5840c7926b7d";
   workspaceSrc =
     if args.workspaceSrc == null
     then ./.
@@ -5768,12 +5768,6 @@ in
         rand = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".rand."0.8.5" {inherit profileName;}).out;
         rand_chacha = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".rand_chacha."0.3.1" {inherit profileName;}).out;
         reqwest = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".reqwest."0.12.4" {inherit profileName;}).out;
-        ${
-          if hostPlatform.config == "x86_64-pc-windows-msvc"
-          then "safe_transmute"
-          else null
-        } =
-          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".safe-transmute."0.11.3" {inherit profileName;}).out;
         secrecy = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".secrecy."0.8.0" {inherit profileName;}).out;
         serde = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".serde."1.0.203" {inherit profileName;}).out;
         serde_dhall = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".serde_dhall."0.12.1" {inherit profileName;}).out;
@@ -6961,21 +6955,6 @@ in
         inherit name version;
         sha256 = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f";
       };
-    });
-
-    "registry+https://github.com/rust-lang/crates.io-index".safe-transmute."0.11.3" = overridableMkRustCrate (profileName: rec {
-      name = "safe-transmute";
-      version = "0.11.3";
-      registry = "registry+https://github.com/rust-lang/crates.io-index";
-      src = fetchCratesIo {
-        inherit name version;
-        sha256 = "3944826ff8fa8093089aba3acb4ef44b9446a99a16f3bf4e74af3f77d340ab7d";
-      };
-      features = builtins.concatLists [
-        ["alloc"]
-        ["default"]
-        ["std"]
-      ];
     });
 
     "registry+https://github.com/rust-lang/crates.io-index".scopeguard."1.2.0" = overridableMkRustCrate (profileName: rec {
