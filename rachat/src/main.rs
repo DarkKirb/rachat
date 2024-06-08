@@ -126,15 +126,15 @@ async fn main() -> Result<()> {
 
     // Start the app
     tokio::task::spawn_blocking(|| {
-        // Create the application and engine
-        let mut app = QGuiApplication::new();
         // bug workaround for missing dark theme on windows
         #[cfg(windows)]
         {
-            if env::var("QT_QUICK_CONTROLS_STYLE").is_err() {
-                env::set_var("QT_QUICK_CONTROLS_STYLE", "Fusion");
+            if std::env::var("QT_QUICK_CONTROLS_STYLE").is_err() {
+                std::env::set_var("QT_QUICK_CONTROLS_STYLE", "Fusion");
             }
         }
+        // Create the application and engine
+        let mut app = QGuiApplication::new();
         let mut engine = QQmlApplicationEngine::new();
 
         // Load the QML path into the engine
