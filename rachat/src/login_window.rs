@@ -41,3 +41,14 @@ impl Initialize for LoginWindow {
         });
     }
 }
+
+impl LoginWindow {
+    pub fn deselect_homeserver(&self) {
+        tokio::spawn(async move {
+            let data_store = crate::rachat().data_store();
+            data_store.reset_homeserver().await?;
+            APP_STATE.navigate(RachatPages::SelectHomeserver)?;
+            Ok::<(), eyre::Error>(())
+        });
+    }
+}

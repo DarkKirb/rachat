@@ -165,6 +165,21 @@ impl DataStore {
         ServerName::parse(server_name).is_ok()
     }
 
+    /// Removes the homeserver for this profile
+    ///
+    /// # Errors
+    /// This function returns an error if deleting associated configuratoin data fails.
+    pub async fn reset_homeserver(&self) -> Result<(), DataStoreError> {
+        *self.config.write().await = None;
+        *self.client.write().await = None;
+        tokio::fs::remove_file(&self.config_dir.join("config.json")).await?;
+        self.root_key
+            .open_mutable_file(&self.data_dir, "auth/login")
+            .delete()
+            .await?;
+        Ok(())
+    }
+
     /// Sets the homeserver for this profile
     ///
     /// # Errors

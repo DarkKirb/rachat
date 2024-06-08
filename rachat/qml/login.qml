@@ -28,6 +28,7 @@ Item {
         anchors.top: loginTitle.bottom
         anchors.left: loginDescription.right
         padding: 8
+        onClicked: loginWindow.deselectHomeserver()
     }
     Label {
         id: usernameLabel

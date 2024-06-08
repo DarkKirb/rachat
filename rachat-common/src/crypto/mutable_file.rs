@@ -96,4 +96,20 @@ impl MutableFile {
         };
         Ok(Some(cipher.decrypt(&nonce, payload)?))
     }
+
+    /// Deletes the file if it exists
+    ///
+    /// # Errors
+    /// This function will return an error if deleting the file fails.
+    pub(crate) async fn delete(&self) -> Result<(), MutableFileError> {
+        match fs::remove_file(&self.path).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                if e.kind() == std::io::ErrorKind::NotFound {
+                    return Ok(());
+                }
+                Err(e.into())
+            }
+        }
+    }
 }
