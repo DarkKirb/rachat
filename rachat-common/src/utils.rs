@@ -16,7 +16,7 @@ pub fn path_to_bytes(path: impl AsRef<Path>) -> Vec<u8> {
     use safe_transmute::to_bytes::transmute_to_bytes;
     use std::os::windows::ffi::OsStrExt;
 
-    let path_buf = path.as_ref().as_os_str().encode_wide().collect::<Vec<u8>>();
+    let path_buf = path.as_ref().as_os_str().encode_wide().collect::<Vec<u16>>();
     transmute_to_bytes(&path_buf[..]).to_vec()
 }
 
