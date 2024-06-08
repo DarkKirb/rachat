@@ -14,7 +14,7 @@ use std::{
     sync::Arc,
 };
 use tokio::sync::RwLock;
-use tracing::{info, instrument};
+use tracing::{error, info, instrument};
 
 use crate::crypto::{mutable_file::MutableFile, KDFSecretKey};
 
@@ -221,7 +221,9 @@ impl DataStore {
                         s.for_each(move |_| {
                             let data_store = data_store.clone();
                             async move {
-                                data_store.persist_session().await.unwrap();
+                                if let Err(e) = data_store.persist_session().await {
+                                    error!("Failed to persist session: {e:#?}");
+                                }
                             }
                         })
                         .await;
