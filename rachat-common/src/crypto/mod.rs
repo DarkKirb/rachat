@@ -4,32 +4,14 @@ use std::{
     path::Path,
 };
 
+use eyre::{Context, Result};
 use keyring::Entry;
-use miette::Diagnostic;
 use rand::{distributions::Alphanumeric, CryptoRng, Rng, SeedableRng};
 use secrecy::{ExposeSecret, Secret, Zeroize};
-use thiserror::Error;
 
 use self::mutable_file::MutableFile;
 
 pub mod mutable_file;
-
-#[derive(Error, Diagnostic, Debug)]
-/// Errors that can occur during KDF secret key operations
-pub enum KDFSecretKeyError {
-    #[error("Error trying to access the keyring")]
-    #[diagnostic(code(rachat_common::crypto::keyring_error))]
-    /// This error is returned if the keyring operation fails, for example if the keyring is locked or access was denied.
-    KeyringError(#[from] keyring::Error),
-    #[error("Error trying to join synchronous task")]
-    #[diagnostic(code(rachat_common::crypto::join_error))]
-    /// This error is returned if the task for accessing the keyring fails to join, for example if it has been cancelled or panicked.
-    JoinError(#[from] tokio::task::JoinError),
-    #[error("Error trying to serialize/deserialize the keyring entry")]
-    #[diagnostic(code(rachat_common::crypto::keyring_serialization_error))]
-    /// This error is returned if the data stored in the keyring is corrupted.
-    SerializationError(#[from] serde_json::Error),
-}
 
 /// 256 bit key derivation key. This is used as the IKM of a KDF.
 #[derive(Clone, Debug)]
@@ -99,27 +81,29 @@ impl KDFSecretKey {
     /// - The keyring is closed
     /// - The user has rejected access to the keyring.
     /// - There is some sort of IO error preventing the keyring from working.
-    pub async fn load_from_keyring(
-        profile: impl Display + Send,
-    ) -> Result<Self, KDFSecretKeyError> {
+    pub async fn load_from_keyring(profile: impl Display + Send) -> Result<Self> {
         let profile = format!("{profile}");
-        let mut secret_json =
-            tokio::task::spawn_blocking(move || -> Result<String, KDFSecretKeyError> {
-                let entry = Entry::new("rs.chir.rachat", &format!("{profile}-key"))?;
-                match entry.get_password() {
-                    Ok(entry) => Ok(entry),
-                    Err(keyring::Error::NoEntry) => {
-                        let secret = Self::new();
-                        let secret_json = serde_json::to_string(secret.0.expose_secret())?;
-                        entry.set_password(&secret_json)?;
-                        Ok(secret_json)
-                    }
-                    Err(e) => Err(e.into()),
+        let mut secret_json = tokio::task::spawn_blocking(move || -> Result<String> {
+            let entry = Entry::new("rs.chir.rachat", &format!("{profile}-key"))
+                .context("Formatting keyring entry")?;
+            match entry.get_password() {
+                Ok(entry) => Ok(entry),
+                Err(keyring::Error::NoEntry) => {
+                    let secret = Self::new();
+                    let secret_json = serde_json::to_string(secret.0.expose_secret())
+                        .context("serializing root KDF key")?;
+                    entry
+                        .set_password(&secret_json)
+                        .context("Setting KDF key in keyring")?;
+                    Ok(secret_json)
                 }
-            })
-            .await??;
+                Err(e) => Err(e).context("Accessing KDF key in keyring"),
+            }
+        })
+        .await
+        .context("Blocking keychain access")??;
 
-        let mut key = serde_json::from_str(&secret_json)?;
+        let mut key = serde_json::from_str(&secret_json).context("Deserializing root key")?;
         secret_json.zeroize();
         Ok(Self::from_bytes(&mut key))
     }

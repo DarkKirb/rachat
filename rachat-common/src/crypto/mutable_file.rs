@@ -12,27 +12,13 @@ use chacha20poly1305::{
     aead::{Aead, Payload},
     AeadCore, KeyInit, XChaCha20Poly1305, XNonce,
 };
-use miette::Diagnostic;
+use eyre::{Context, Result};
 use rand::thread_rng;
 use std::path::PathBuf;
-use thiserror::Error;
 use tokio::{
     fs,
     io::{AsyncReadExt, AsyncWriteExt},
 };
-
-#[derive(Error, Diagnostic, Debug)]
-/// Errors that can occur during mutable file access.
-pub enum MutableFileError {
-    #[error("IO Error during mutable file access.")]
-    #[diagnostic(code(rachat_common::crypto::mutable_file::io_error))]
-    /// The file failed to read or write
-    IoError(#[from] tokio::io::Error),
-    #[error("Cryptographic error. The file may have been corrupted.")]
-    #[diagnostic(code(rachat_common::crypto::mutable_file::crypto_error))]
-    /// The file could not have been decrypted. This could be because there was corruption or malicious tampering.
-    CryptoError(#[from] chacha20poly1305::aead::Error),
-}
 
 /// Reference to a mutable data file
 #[derive(Clone, Debug)]
@@ -48,25 +34,38 @@ impl MutableFile {
     ///
     /// # Errors
     /// This function will return an error if writing to the file fails.
-    pub async fn write(&self, data: impl AsRef<[u8]> + Send) -> Result<(), MutableFileError> {
+    pub async fn write(&self, data: impl AsRef<[u8]> + Send) -> Result<()> {
         if let Some(path) = self.path.parent() {
-            fs::create_dir_all(path).await?;
+            fs::create_dir_all(path).await.with_context(|| {
+                format!(
+                    "Creating parent directory of {} ({})",
+                    self.path.display(),
+                    path.display()
+                )
+            })?;
         }
         let data = data.as_ref();
 
         let cipher = XChaCha20Poly1305::new(&self.secret_key);
         let nonce = XChaCha20Poly1305::generate_nonce(thread_rng());
-        let payload = cipher.encrypt(&nonce, data)?;
+        let payload = cipher
+            .encrypt(&nonce, data)
+            .with_context(|| format!("Encrypting data for {}", self.path.display()))?;
 
         let mut file = fs::OpenOptions::new()
             .create(true)
             .truncate(true)
             .write(true)
             .open(&self.path)
-            .await?;
+            .await
+            .with_context(|| format!("Creating and opening file {}", self.path.display()))?;
 
-        file.write_all(&nonce).await?;
-        file.write_all(&payload).await?;
+        file.write_all(&nonce)
+            .await
+            .with_context(|| format!("writing nonce for {}", self.path.display()))?;
+        file.write_all(&payload)
+            .await
+            .with_context(|| format!("writing ciphertext for {}", self.path.display()))?;
 
         Ok(())
     }
@@ -75,40 +74,49 @@ impl MutableFile {
     ///
     /// # Errors
     /// This function will return an error if reading from the file fails.
-    pub async fn read(&self) -> Result<Option<Vec<u8>>, MutableFileError> {
+    pub async fn read(&self) -> Result<Option<Vec<u8>>> {
         let mut file = match fs::OpenOptions::new().read(true).open(&self.path).await {
             Ok(file) => file,
             Err(e) => {
                 if e.kind() == std::io::ErrorKind::NotFound {
                     return Ok(None);
                 }
-                return Err(e.into());
+                Err(e).with_context(|| format!("Opening file {}", self.path.display()))?;
+                unreachable!();
             }
         };
         let cipher = XChaCha20Poly1305::new(&self.secret_key);
         let mut nonce = XNonce::default();
-        file.read_exact(&mut nonce).await?;
+        file.read_exact(&mut nonce)
+            .await
+            .with_context(|| format!("Reading nonce of file {}", self.path.display()))?;
         let mut payload = Vec::new();
-        file.read_to_end(&mut payload).await?;
+        file.read_to_end(&mut payload)
+            .await
+            .with_context(|| format!("Reading ciphertext of file {}", self.path.display()))?;
         let payload = Payload {
             aad: &[],
             msg: &payload,
         };
-        Ok(Some(cipher.decrypt(&nonce, payload)?))
+        Ok(Some(cipher.decrypt(&nonce, payload).with_context(
+            || format!("Decryption of file {}", self.path.display()),
+        )?))
     }
 
     /// Deletes the file if it exists
     ///
     /// # Errors
     /// This function will return an error if deleting the file fails.
-    pub(crate) async fn delete(&self) -> Result<(), MutableFileError> {
+    pub(crate) async fn delete(&self) -> Result<()> {
         match fs::remove_file(&self.path).await {
             Ok(_) => Ok(()),
             Err(e) => {
                 if e.kind() == std::io::ErrorKind::NotFound {
                     return Ok(());
                 }
-                Err(e.into())
+                Err(e)
+                    .with_context(|| format!("Deleting encrypted file {}.", self.path.display()))?;
+                Ok(())
             }
         }
     }
