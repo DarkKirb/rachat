@@ -57,4 +57,12 @@ Item {
         padding: 8
         echoMode: TextInput.Password
     }
+    Button {
+        id: loginButton
+        text: qsTr("Login")
+        anchors.top: passwordLabel.bottom
+        anchors.left: parent.left
+        padding: 8
+        onClicked: loginWindow.login(usernameTextField.text, passwordTextField.text)
+    }
 }

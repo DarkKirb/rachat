@@ -3,7 +3,7 @@ pub mod login_window;
 pub mod pages;
 pub mod select_homeserver;
 
-use std::{fmt::Debug, pin::Pin, sync::Arc, time::Duration};
+use std::{fmt::Debug, future::Future, pin::Pin, sync::Arc, time::Duration};
 
 use cxx_qt::CxxQtThread;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QString, QUrl};
@@ -78,6 +78,19 @@ impl AppState {
             root_window.set_next_url(url.into());
         })?;
         Ok(())
+    }
+
+    pub fn spawn<F, Fut>(&self, fun: F)
+    where
+        F: FnOnce() -> Fut + Send + 'static,
+        Fut: Future<Output = Result<()>> + Send + 'static,
+    {
+        tokio::spawn(async move {
+            let result = fun().await;
+            if let Err(e) = result {
+                warn!("Error in spawned future: {e:?}");
+            }
+        });
     }
 }
 

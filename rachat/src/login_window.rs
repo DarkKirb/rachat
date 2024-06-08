@@ -51,4 +51,14 @@ impl LoginWindow {
             Ok::<(), eyre::Error>(())
         });
     }
+
+    pub fn login(&self, username: QString, password: QString) {
+        APP_STATE.spawn(move || async move {
+            crate::rachat()
+                .data_store()
+                .login(username.to_string(), password.to_string())
+                .await?;
+            Ok(())
+        })
+    }
 }

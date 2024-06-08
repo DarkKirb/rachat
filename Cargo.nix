@@ -23,7 +23,7 @@ args @ {
   workspaceSrc,
   ignoreLockHash,
 }: let
-  nixifiedLockHash = "5a66773fdc5a9e7cdb589abc6b91c0c86f3a83ef352b40506d4f5840c7926b7d";
+  nixifiedLockHash = "524082092d24e9347441c2b3cdca38989df19457afeed892e14b25231e0e9fcb";
   workspaceSrc =
     if args.workspaceSrc == null
     then ./.
@@ -2615,6 +2615,33 @@ in
       };
     });
 
+    "registry+https://github.com/rust-lang/crates.io-index".futures."0.3.30" = overridableMkRustCrate (profileName: rec {
+      name = "futures";
+      version = "0.3.30";
+      registry = "registry+https://github.com/rust-lang/crates.io-index";
+      src = fetchCratesIo {
+        inherit name version;
+        sha256 = "645c6916888f6cb6350d2550b80fb63e734897a8498abe35cfb732b6487804b0";
+      };
+      features = builtins.concatLists [
+        ["alloc"]
+        ["async-await"]
+        ["default"]
+        ["executor"]
+        ["futures-executor"]
+        ["std"]
+      ];
+      dependencies = {
+        futures_channel = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-channel."0.3.30" {inherit profileName;}).out;
+        futures_core = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-core."0.3.30" {inherit profileName;}).out;
+        futures_executor = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-executor."0.3.30" {inherit profileName;}).out;
+        futures_io = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-io."0.3.30" {inherit profileName;}).out;
+        futures_sink = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-sink."0.3.30" {inherit profileName;}).out;
+        futures_task = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-task."0.3.30" {inherit profileName;}).out;
+        futures_util = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-util."0.3.30" {inherit profileName;}).out;
+      };
+    });
+
     "registry+https://github.com/rust-lang/crates.io-index".futures-channel."0.3.30" = overridableMkRustCrate (profileName: rec {
       name = "futures-channel";
       version = "0.3.30";
@@ -2626,10 +2653,13 @@ in
       features = builtins.concatLists [
         ["alloc"]
         ["default"]
+        ["futures-sink"]
+        ["sink"]
         ["std"]
       ];
       dependencies = {
         futures_core = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-core."0.3.30" {inherit profileName;}).out;
+        futures_sink = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-sink."0.3.30" {inherit profileName;}).out;
       };
     });
 
@@ -2646,6 +2676,24 @@ in
         ["default"]
         ["std"]
       ];
+    });
+
+    "registry+https://github.com/rust-lang/crates.io-index".futures-executor."0.3.30" = overridableMkRustCrate (profileName: rec {
+      name = "futures-executor";
+      version = "0.3.30";
+      registry = "registry+https://github.com/rust-lang/crates.io-index";
+      src = fetchCratesIo {
+        inherit name version;
+        sha256 = "a576fc72ae164fca6b9db127eaa9a9dda0d61316034f33a0a0d4eda41f02b01d";
+      };
+      features = builtins.concatLists [
+        ["std"]
+      ];
+      dependencies = {
+        futures_core = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-core."0.3.30" {inherit profileName;}).out;
+        futures_task = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-task."0.3.30" {inherit profileName;}).out;
+        futures_util = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures-util."0.3.30" {inherit profileName;}).out;
+      };
     });
 
     "registry+https://github.com/rust-lang/crates.io-index".futures-io."0.3.30" = overridableMkRustCrate (profileName: rec {
@@ -5755,6 +5803,7 @@ in
         ciborium = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".ciborium."0.2.2" {inherit profileName;}).out;
         directories_next = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".directories-next."2.0.0" {inherit profileName;}).out;
         educe = (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".educe."0.6.0" {profileName = "__noProfile";}).out;
+        futures = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".futures."0.3.30" {inherit profileName;}).out;
         keyring = (rustPackages."registry+https://github.com/rust-lang/crates.io-index".keyring."2.3.3" {inherit profileName;}).out;
         ${
           if hostPlatform.config == "x86_64-pc-windows-msvc"

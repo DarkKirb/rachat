@@ -46,6 +46,8 @@ pub mod qobject {
         fn on_homeserver_text_changed(self: Pin<&mut SelectHomeserver>, homeserver: QString);
         #[qinvokable]
         fn deselect_homeserver(self: &LoginWindow);
+        #[qinvokable]
+        fn login(self: &LoginWindow, username: QString, password: QString);
     }
 }
 

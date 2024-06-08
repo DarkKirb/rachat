@@ -3,7 +3,8 @@
 //! Frontend code renders values from this module
 use directories_next::ProjectDirs;
 use educe::Educe;
-use matrix_sdk::{matrix_auth::MatrixSession, Client, OwnedServerName, ServerName};
+use futures::StreamExt;
+use matrix_sdk::{matrix_auth::MatrixSession, AuthSession, Client, OwnedServerName, ServerName};
 use miette::Diagnostic;
 use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
@@ -14,7 +15,7 @@ use std::{
 };
 use thiserror::Error;
 use tokio::sync::RwLock;
-use tracing::instrument;
+use tracing::{info, instrument};
 
 use crate::crypto::{
     mutable_file::{MutableFile, MutableFileError},
@@ -44,10 +45,14 @@ pub enum DataStoreError {
     #[diagnostic(code(rachat_common::crypto::data_store::mutable_file_error))]
     /// A mutable file could not be accessed.
     MutableFileError(#[from] MutableFileError),
+    #[error("CBOR Deseriallization error")]
+    #[diagnostic(code(rachat_common::crypto::data_store::cbor_deserialization))]
+    /// CBOR serialized data failed to deserialize
+    CBORDeserializationError(#[from] ciborium::de::Error<std::io::Error>),
     #[error("CBOR Seriallization error")]
     #[diagnostic(code(rachat_common::crypto::data_store::cbor_serialization))]
-    /// CBOR serialized data failed to deserialize
-    CBORSerializationError(#[from] ciborium::de::Error<std::io::Error>),
+    /// CBOR serialization failed
+    CBORSerializationError(#[from] ciborium::ser::Error<std::io::Error>),
     #[error("Matrix SDK Error")]
     #[diagnostic(code(rachat_common::crypto::data_store::matrix_sdk))]
     /// There was an error with the Matrix SDK
@@ -109,33 +114,20 @@ impl DataStore {
 
         let root_key = KDFSecretKey::load_from_keyring(profile).await?;
 
-        let secret = root_key.subkey_passphrase("matrix-rust-sdk");
-
-        let client = if let Some(config) = &config {
-            Some(
-                Client::builder()
-                    .server_name(config.server_name.as_ref())
-                    .sqlite_store(
-                        data_dir.join("matrix.db"),
-                        Some(secret.expose_secret().as_str()),
-                    )
-                    .user_agent("rachat")
-                    .handle_refresh_tokens()
-                    .build()
-                    .await?,
-            )
-        } else {
-            None
-        };
-
-        Ok(Arc::new(Self {
+        let res = Arc::new(Self {
             root_key,
             config_dir,
-            config: RwLock::new(config),
+            config: RwLock::new(config.clone()),
             data_dir,
             cache_dir,
-            client: RwLock::new(client.map(Arc::new)),
-        }))
+            client: RwLock::new(None),
+        });
+
+        if let Some(config) = config {
+            Arc::clone(&res).set_homeserver(config.server_name).await?;
+        }
+
+        Ok(res)
     }
 
     /// Returns true if a client has been initialized for this profile
@@ -190,7 +182,7 @@ impl DataStore {
     /// - Existing session data could not be loaded from disk
     /// - The profile configuration file could not be updated
     pub async fn set_homeserver(
-        &self,
+        self: Arc<Self>,
         server_name: impl AsRef<str> + Send,
     ) -> Result<(), DataStoreError> {
         let server_name = ServerName::parse(server_name)?;
@@ -237,6 +229,43 @@ impl DataStore {
 
         drop(config);
 
+        let data_store = Arc::clone(&self);
+        tokio::spawn(async move {
+            Arc::clone(&data_store)
+                .with_client(move |client| async move {
+                    if let Some(s) = client.matrix_auth().session_tokens_changed_stream() {
+                        s.for_each(move |_| {
+                            let data_store = data_store.clone();
+                            async move {
+                                data_store.persist_session().await.unwrap();
+                            }
+                        })
+                        .await;
+                    }
+                    Ok::<(), DataStoreError>(())
+                })
+                .await?;
+            Ok::<(), DataStoreError>(())
+        });
+
+        Ok(())
+    }
+
+    async fn persist_session(&self) -> Result<(), DataStoreError> {
+        let session = self
+            .with_client(|client| async move { Ok::<_, DataStoreError>(client.session()) })
+            .await?;
+        match session {
+            Some(Some(AuthSession::Matrix(session))) => {
+                let mut data = Vec::new();
+                ciborium::ser::into_writer(&session, &mut data)?;
+                self.root_key
+                    .open_mutable_file(&self.data_dir, "auth/login")
+                    .write(data)
+                    .await?;
+            }
+            _ => {}
+        }
         Ok(())
     }
 
@@ -245,5 +274,31 @@ impl DataStore {
     /// This data will be encrypted on disk
     pub fn open_mutable_file(&self, path: impl AsRef<Path>) -> MutableFile {
         self.root_key.open_mutable_file(&self.data_dir, path)
+    }
+
+    /// Logins a user to a homeserver
+    pub async fn login(
+        &self,
+        username: impl AsRef<str> + Send,
+        password: impl AsRef<str> + Send,
+    ) -> Result<(), DataStoreError> {
+        self.with_client(|client| async move {
+            let response = client
+                .matrix_auth()
+                .login_username(username.as_ref(), password.as_ref())
+                .request_refresh_token()
+                .send()
+                .await?;
+            info!(
+                "Logged in as {}, got device_id {}",
+                username.as_ref(),
+                response.device_id,
+            );
+            Ok::<_, DataStoreError>(())
+        })
+        .await
+        .map(|_| ())?;
+        self.persist_session().await?;
+        Ok(())
     }
 }
