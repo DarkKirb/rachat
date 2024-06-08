@@ -25,7 +25,7 @@ impl SelectHomeserver {
     pub fn on_homeserver_text_changed(self: Pin<&mut Self>, homeserver: QString) {
         let homeserver = homeserver.to_string();
 
-        if DataStore::is_valid_homeserver_name(homeserver) {
+        if !DataStore::is_valid_homeserver_name(homeserver) {
             self.set_error_string(QString::from("Invalid homeserver name"));
         } else {
             self.set_error_string(QString::from(""));
