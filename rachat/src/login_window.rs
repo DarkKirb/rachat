@@ -14,7 +14,7 @@ pub struct LoginWindowRust {
 impl Initialize for LoginWindow {
     fn initialize(self: Pin<&mut Self>) {
         let thread = self.qt_thread();
-        tokio::spawn(async move {
+        APP_STATE.spawn(|| async move {
             let data_store = crate::rachat().data_store();
             match data_store
                 .with_client(|client| async move {
@@ -44,7 +44,7 @@ impl Initialize for LoginWindow {
 
 impl LoginWindow {
     pub fn deselect_homeserver(&self) {
-        tokio::spawn(async move {
+        APP_STATE.spawn(|| async move {
             let data_store = crate::rachat().data_store();
             data_store.reset_homeserver().await?;
             APP_STATE.navigate(RachatPages::SelectHomeserver)?;

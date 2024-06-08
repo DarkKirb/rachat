@@ -34,7 +34,7 @@ impl SelectHomeserver {
     pub fn select_homeserver(&self, homeserver: QString) {
         let homeserver = homeserver.to_string();
         let thread = self.qt_thread();
-        tokio::spawn(async move {
+        APP_STATE.spawn(|| async move {
             let data_store = crate::rachat().data_store();
             if let Err(e) = data_store.set_homeserver(&homeserver).await {
                 warn!("Failed to set homeserver: {e:?}");
@@ -45,7 +45,7 @@ impl SelectHomeserver {
             } else {
                 APP_STATE.navigate(RachatPages::Login)?;
             }
-            Ok::<(), eyre::Error>(())
+            Ok(())
         });
     }
 }

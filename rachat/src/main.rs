@@ -128,13 +128,12 @@ async fn main() -> Result<()> {
 
     RACHAT.set(Rachat::new().await?).unwrap();
 
-    tokio::spawn(async {
+    APP_STATE.spawn(|| async {
         tokio::time::sleep(Duration::from_secs(5)).await;
-        APP_STATE
-            .with_root_window(|root_window| {
-                root_window.set_title_string(QString::from("Hello, World!"));
-            })
-            .unwrap();
+        APP_STATE.with_root_window(|root_window| {
+            root_window.set_title_string(QString::from("Hello, World!"));
+        })?;
+        Ok(())
     });
 
     // Start the app

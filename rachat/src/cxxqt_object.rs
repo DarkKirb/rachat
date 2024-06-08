@@ -65,8 +65,8 @@ pub struct RootWindowRust {
 impl Initialize for qobject::RootWindow {
     fn initialize(self: Pin<&mut Self>) {
         let thread = self.qt_thread();
-        crate::APP_STATE.set_root_window(thread);
-        tokio::spawn(async move {
+        APP_STATE.set_root_window(thread);
+        APP_STATE.spawn(|| async move {
             let has_no_client = rachat()
                 .data_store()
                 .with_client(|client| async move {
@@ -82,7 +82,7 @@ impl Initialize for qobject::RootWindow {
             if has_no_client {
                 APP_STATE.navigate(RachatPages::SelectHomeserver)?;
             }
-            Ok::<(), eyre::Error>(())
+            Ok(())
         });
     }
 }
