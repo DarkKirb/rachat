@@ -3,7 +3,7 @@
 //! Frontend code renders values from this module
 use directories_next::ProjectDirs;
 use educe::Educe;
-use eyre::{Context, Ok, Result};
+use eyre::{Context, Result};
 use futures::StreamExt;
 use matrix_sdk::{matrix_auth::MatrixSession, AuthSession, Client, OwnedServerName, ServerName};
 use secrecy::ExposeSecret;
@@ -188,19 +188,31 @@ impl DataStore {
             .context("Building the client")?;
 
         // Restore the login session if it exists
-        if let Some(session_data) = self
+        match self
             .root_key
             .open_mutable_file(&self.data_dir, "auth/login")
             .read()
             .await
-            .context("Reading auth/login")?
+            .context("Reading auth/login")
         {
-            let client_session: MatrixSession = ciborium::de::from_reader(session_data.as_slice())
-                .context("Deserializing auth/login")?;
-            client
-                .restore_session(client_session)
-                .await
-                .context("Restoring matrix session")?;
+            Ok(Some(session_data)) => {
+                let client_session: MatrixSession =
+                    ciborium::de::from_reader(session_data.as_slice())
+                        .context("Deserializing auth/login")?;
+                client
+                    .restore_session(client_session)
+                    .await
+                    .context("Restoring matrix session")?;
+            }
+            Ok(None) => {}
+            Err(e) => {
+                error!("Failed to read auth/login: {e:#?}");
+                self.root_key
+                    .open_mutable_file(&self.data_dir, "auth/login")
+                    .delete()
+                    .await
+                    .context("Deleting auth/login")?;
+            }
         }
 
         *self.client.write().await = Some(Arc::new(client));
@@ -231,7 +243,7 @@ impl DataStore {
                     Ok(())
                 })
                 .await?;
-            Ok(())
+            eyre::Ok(())
         });
 
         Ok(())
