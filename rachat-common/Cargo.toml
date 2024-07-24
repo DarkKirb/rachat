@@ -11,7 +11,7 @@ directories-next = "2.0.0"
 educe = "0.6.0"
 eyre = "0.6.12"
 futures = "0.3.30"
-keyring = "2.3.3"
+keyring = "3.0.4"
 matrix-sdk = { version = "0.7.1", default-features = false, features = [
     "anyhow",
     "markdown",
