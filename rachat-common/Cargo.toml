@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-blake3 = { version = "1.5.1", features = ["rayon"] }
+blake3 = { version = "1.5.4", features = ["rayon"] }
 chacha20poly1305 = "0.10.1"
 ciborium = "0.2.2"
 directories-next = "2.0.0"
