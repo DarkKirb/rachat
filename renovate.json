@@ -1,0 +1,14 @@
+{
+    "extends": [
+        "config:best-practices"
+    ],
+    "postUpgradeTasks": {
+        "commands": [
+            "cargo2nix -o",
+            "treefmt"
+        ],
+        "fileFilters": [
+            "Cargo.*"
+        ]
+    }
+}

@@ -1,0 +1,41 @@
+{
+    "enabled": 1,
+    "hidden": false,
+    "description": "jobsets",
+    "nixexprinput": "rachat",
+    "nixexprpath": "hydra/jobsets.nix",
+    "checkinterval": 3600,
+    "schedulingshares": 100,
+    "enableemail": false,
+    "emailoverride": "",
+    "keepnr": 1,
+    "inputs": {
+        "rachat": {
+            "type": "git",
+            "value": "https://github.com/DarkKirb/chir.rs.git main",
+            "emailresponsible": false
+        },
+        "nixpkgs": {
+            "type": "git",
+            "value": "https://github.com/NixOS/nixpkgs.git",
+            "emailresponsible": false
+        },
+        "prsJSON": {
+            "type": "githubpulls",
+            "value": "DarkKirb chir.rs",
+            "emailresponsible": false
+        },
+        "github_input": {
+            "type": "string",
+            "value": "rachat"
+        },
+        "github_repo_owner": {
+            "type": "string",
+            "value": "DarkKirb"
+        },
+        "github_repo_name": {
+            "type": "string",
+            "value": "chir.rs"
+        }
+    }
+}
