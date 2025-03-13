@@ -209,12 +209,12 @@ jobs:
           args: --release
       - run: |
           mkdir dist
-          cp target/release/rachat dist
+          cp target/release/rachat-qt dist
         if: matrix.os == 'ubuntu-latest'
       - run: |
           mkdir dist
-          cp target/release/rachat.exe dist
-          windeployqt --qmldir . --release dist/rachat.exe
+          cp target/release/rachat-qt.exe dist
+          windeployqt --qmldir . --release dist/rachat-qt.exe
         if: matrix.os == 'windows-latest'
         shell: pwsh
       - uses: actions/upload-artifact@v4
