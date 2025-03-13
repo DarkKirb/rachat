@@ -12,7 +12,7 @@
     "inputs": {
         "rachat": {
             "type": "git",
-            "value": "https://github.com/DarkKirb/chir.rs.git main",
+            "value": "https://github.com/DarkKirb/rachat.git main",
             "emailresponsible": false
         },
         "nixpkgs": {
@@ -22,7 +22,7 @@
         },
         "prsJSON": {
             "type": "githubpulls",
-            "value": "DarkKirb chir.rs",
+            "value": "DarkKirb rachat",
             "emailresponsible": false
         },
         "github_input": {
@@ -35,7 +35,7 @@
         },
         "github_repo_name": {
             "type": "string",
-            "value": "chir.rs"
+            "value": "rachat"
         }
     }
 }
