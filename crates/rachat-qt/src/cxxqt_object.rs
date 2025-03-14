@@ -34,6 +34,7 @@ pub mod qobject {
 
 use core::pin::Pin;
 use cxx_qt_lib::QString;
+use tracing::info;
 
 /// The Rust struct for the QObject
 #[derive(Default)]
@@ -51,6 +52,6 @@ impl qobject::MyObject {
 
     /// Print a log message with the given string and number
     pub fn say_hi(&self, string: &QString, number: i32) {
-        println!("Hi from Rust! String is '{string}' and number is {number}");
+        info!("Hi from Rust! String is '{string}' and number is {number}");
     }
 }

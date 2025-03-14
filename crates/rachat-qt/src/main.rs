@@ -1,8 +1,16 @@
 pub mod cxxqt_object;
 
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
+use eyre::Result;
 
-fn main() {
+#[tokio::main]
+async fn main() -> Result<()> {
+    rachat::init_logger().await?;
+    tokio::task::spawn_blocking(start).await?;
+    Ok(())
+}
+
+fn start() {
     // Create the application and engine
     let mut app = QGuiApplication::new();
     let mut engine = QQmlApplicationEngine::new();
