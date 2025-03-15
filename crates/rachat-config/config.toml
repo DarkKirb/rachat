@@ -1,0 +1,12 @@
+# Build-time configuration overrides and config file template
+# Everything in this file is intentionally commented out.
+# Uncomment to change default values of configuration properties.
+
+# QT Configuration
+# [gui.qt]
+
+# The QML Style to use
+# Depending on platform, a variety of styles are available.
+# Rachat attempts to choose one that looks approximately like the platform theme.
+
+# platform = "Fusion"

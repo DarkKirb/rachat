@@ -1,19 +1,28 @@
 //! Entrypoint for the QT GUI
 pub mod cxxqt_object;
 
-use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
+use std::sync::Arc;
+
+use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QQuickStyle, QString, QUrl};
 use eyre::Result;
+use rachat::Rachat;
+use rachat_config::ConfigSourceExt;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let (x1, x2) = tokio::join!(rachat::start(), tokio::task::spawn_blocking(start));
-    x1?;
-    x2?;
+    let rachat = Rachat::new().await?;
+    tokio::task::spawn_blocking(|| start(rachat));
     Ok(())
 }
 
 /// Start the QT Application
-fn start() {
+#[allow(clippy::needless_pass_by_value)]
+fn start(rachat: Arc<Rachat>) -> Result<()> {
+    if let Some(qml_style) = rachat.config().get::<_, String>("qt.style")? {
+        info!("Setting QML Style to: {qml_style}");
+        QQuickStyle::set_style(&QString::from(&*qml_style));
+    }
     // Create the application and engine
     let mut app = QGuiApplication::new();
     let mut engine = QQmlApplicationEngine::new();
@@ -37,4 +46,6 @@ fn start() {
     if let Some(app) = app.as_mut() {
         app.exec();
     }
+
+    Ok(())
 }
