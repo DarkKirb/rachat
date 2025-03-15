@@ -2,6 +2,7 @@
 //!
 //! These are all things that could be independent of rachat
 pub mod logging;
+pub mod paths;
 
 /// The reverse domain name notation of the app, without the app name
 pub const QUALIFIER: &str = "rs.chir";
