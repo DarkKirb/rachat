@@ -1,3 +1,18 @@
 [workspace]
 resolver = "3"
 members = ["rachat-qt"]
+
+[workspace.lints.rust]
+unsafe-code = "forbid"
+deprecated-safe = "forbid"
+future-incompatible = "deny"
+missing-docs = "warn"
+variant-size-differences = "warn"
+
+[workspace.lints.clippy]
+nursery = { level = "warn", priority = -2 }
+pedantic = { level = "warn", priority = -1 }
+panic = "deny"
+unwrap_used = "deny"
+expect_used = "warn"
+missing_docs_in_private_items = "warn"
