@@ -4,13 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-color-eyre = "0.6.3"
 eyre = "0.6.12"
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
-
-[target.'cfg(windows)'.dependencies]
-tracing-etw = "0.2.1"
-
-[target.'cfg(target_os = "macos")'.dependencies]
-tracing-oslog = "0.2.0"
+rachat-misc = { version = "0.1.0", path = "../rachat-misc" }

@@ -5,8 +5,9 @@ use eyre::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    rachat::init_logger().await?;
-    tokio::task::spawn_blocking(start).await?;
+    let (x1, x2) = tokio::join!(rachat::start(), tokio::task::spawn_blocking(start));
+    x1?;
+    x2?;
     Ok(())
 }
 

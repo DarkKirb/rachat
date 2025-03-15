@@ -5,6 +5,7 @@ args@{
   release ? true,
   rootFeatures ? [
     "rachat/default"
+    "rachat-misc/default"
     "rachat-qt/default"
   ],
   rustPackages,
@@ -26,7 +27,7 @@ args@{
   cargoConfig ? { },
 }:
 let
-  nixifiedLockHash = "ee233db63a01c5bb78276f7126993925c8bf35200303f689cf36830955c65095";
+  nixifiedLockHash = "1a1fe0391837f2cf4345c354aa8ae7542e8a4c342b2e82e055ee22540971276a";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -95,6 +96,7 @@ else
     cargo2nixVersion = "0.11.0";
     workspace = {
       rachat = rustPackages.unknown.rachat."0.1.0";
+      rachat-misc = rustPackages.unknown.rachat-misc."0.1.0";
       rachat-qt = rustPackages.unknown.rachat-qt."0.1.0";
     };
     "registry+https://github.com/rust-lang/crates.io-index".addr2line."0.21.0" =
@@ -1842,16 +1844,26 @@ else
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
+        eyre =
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".eyre."0.6.12" {
+            inherit profileName;
+          }).out;
+        rachat_misc = (rustPackages."unknown".rachat-misc."0.1.0" { inherit profileName; }).out;
+      };
+    });
+
+    "unknown".rachat-misc."0.1.0" = overridableMkRustCrate (profileName: rec {
+      name = "rachat-misc";
+      version = "0.1.0";
+      registry = "unknown";
+      src = fetchCrateLocal workspaceSrc;
+      dependencies = {
         color_eyre =
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".color-eyre."0.6.3" {
             inherit profileName;
           }).out;
         eyre =
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".eyre."0.6.12" {
-            inherit profileName;
-          }).out;
-        tracing =
-          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.41" {
             inherit profileName;
           }).out;
         ${if hostPlatform.isWindows then "tracing_etw" else null} =

@@ -671,9 +671,16 @@ dependencies = [
 name = "rachat"
 version = "0.1.0"
 dependencies = [
+ "eyre",
+ "rachat-misc",
+]
+
+[[package]]
+name = "rachat-misc"
+version = "0.1.0"
+dependencies = [
  "color-eyre",
  "eyre",
- "tracing",
  "tracing-etw",
  "tracing-oslog",
  "tracing-subscriber",
