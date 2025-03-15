@@ -1,6 +1,6 @@
-/// Miscellaneous rachat components
-///
-/// These are all things that could be independent of rachat
+//! Miscellaneous rachat components
+//!
+//! These are all things that could be independent of rachat
 pub mod logging;
 
 /// The reverse domain name notation of the app, without the app name

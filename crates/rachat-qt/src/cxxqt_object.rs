@@ -1,4 +1,6 @@
+//! CXX-QT bridge module
 #![expect(unsafe_code, reason = "Needed for c++ interop")]
+#![expect(clippy::unnecessary_box_returns, reason = "generated code")]
 /// The bridge definition for our QObject
 #[cxx_qt::bridge]
 pub mod qobject {
@@ -37,15 +39,17 @@ use core::pin::Pin;
 use cxx_qt_lib::QString;
 use tracing::info;
 
-/// The Rust struct for the QObject
+/// The Rust struct for the `QObject`
 #[derive(Default)]
 pub struct MyObjectRust {
+    /// The stored number
     number: i32,
+    /// The formatted string
     string: QString,
 }
 
 impl qobject::MyObject {
-    /// Increment the number Q_PROPERTY
+    /// Increment the number `Q_PROPERTY`
     pub fn increment_number(self: Pin<&mut Self>) {
         let previous = *self.number();
         self.set_number(previous + 1);

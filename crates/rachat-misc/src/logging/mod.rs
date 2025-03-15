@@ -2,16 +2,25 @@
 //!
 //! Contains global logger initialization code
 
-use eyre::{Context, Result};
+use eyre::Result;
 use tracing_subscriber::{
     EnvFilter, Layer, Registry, fmt, layer::SubscriberExt, util::SubscriberInitExt,
 };
 
 /// Initializes the logger
+///
+/// # Errors
+///
+/// On Windows, initializing the Event Tracing for Windows logger may fail.
+///
+/// # Panics
+///
+/// This function will panic if, due to a bug in this code, the default log filter is invalid.
 pub fn init() -> Result<()> {
+    #[expect(clippy::expect_used, reason = "This should never happen")]
     let filter = EnvFilter::try_from_default_env()
         .or_else(|_| EnvFilter::try_new("info"))
-        .context("Initializing the log filter")?;
+        .expect("The default log filter should be valid!");
 
     #[cfg(windows)]
     {

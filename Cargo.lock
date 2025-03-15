@@ -671,6 +671,7 @@ dependencies = [
 name = "rachat"
 version = "0.1.0"
 dependencies = [
+ "color-eyre",
  "eyre",
  "rachat-misc",
  "tracing",
@@ -680,7 +681,6 @@ dependencies = [
 name = "rachat-misc"
 version = "0.1.0"
 dependencies = [
- "color-eyre",
  "eyre",
  "tracing-etw",
  "tracing-oslog",

@@ -1,3 +1,4 @@
+//! Entrypoint for the QT GUI
 pub mod cxxqt_object;
 
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
@@ -11,6 +12,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+/// Start the QT Application
 fn start() {
     // Create the application and engine
     let mut app = QGuiApplication::new();

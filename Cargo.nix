@@ -27,7 +27,7 @@ args@{
   cargoConfig ? { },
 }:
 let
-  nixifiedLockHash = "1a1fe0391837f2cf4345c354aa8ae7542e8a4c342b2e82e055ee22540971276a";
+  nixifiedLockHash = "c4ea5b5f7495f95b61a712d889e7f5c75895e7bfd0c4f5663f9ba5fa64429762";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -1844,11 +1844,19 @@ else
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
+        color_eyre =
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".color-eyre."0.6.3" {
+            inherit profileName;
+          }).out;
         eyre =
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".eyre."0.6.12" {
             inherit profileName;
           }).out;
         rachat_misc = (rustPackages."unknown".rachat-misc."0.1.0" { inherit profileName; }).out;
+        tracing =
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tracing."0.1.41" {
+            inherit profileName;
+          }).out;
       };
     });
 
@@ -1858,10 +1866,6 @@ else
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
-        color_eyre =
-          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".color-eyre."0.6.3" {
-            inherit profileName;
-          }).out;
         eyre =
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".eyre."0.6.12" {
             inherit profileName;
