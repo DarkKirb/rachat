@@ -1,3 +1,4 @@
+#![expect(unsafe_code, reason = "Needed for c++ interop")]
 /// The bridge definition for our QObject
 #[cxx_qt::bridge]
 pub mod qobject {

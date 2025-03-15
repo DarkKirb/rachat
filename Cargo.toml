@@ -2,8 +2,15 @@
 resolver = "3"
 members = ["crates/*"]
 
+[workspace.package]
+version = "0.1.0"
+repository = "https://github.com/DarkKirb/rachat"
+edition = "2024"
+authors = ["Charlotte 🦝 Deleńkec <lotte@chir.rs>"]
+license = "EUPL-1.2"
+
 [workspace.lints.rust]
-unsafe-code = "forbid"
+unsafe-code = "deny"
 deprecated-safe = "forbid"
 future-incompatible = "deny"
 missing-docs = "warn"
