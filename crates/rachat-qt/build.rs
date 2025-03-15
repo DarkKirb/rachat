@@ -1,3 +1,4 @@
+//! Build script for the QT modules
 use cxx_qt_build::{CxxQtBuilder, QmlModule};
 
 fn main() {

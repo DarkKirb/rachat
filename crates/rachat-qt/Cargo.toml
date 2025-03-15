@@ -1,9 +1,10 @@
 [package]
 name = "rachat-qt"
-version = "0.1.0"
-edition = "2024"
-
-links = "rachat-qt"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+repository.workspace = true
 
 [dependencies]
 cxx = "1.0.144"
@@ -16,3 +17,6 @@ tracing = "0.1.41"
 
 [build-dependencies]
 cxx-qt-build = "0.7.1"
+
+[lints]
+workspace = true

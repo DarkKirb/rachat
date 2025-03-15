@@ -216,6 +216,7 @@
                 nixfmt-rfc-style
                 qt6.full
                 qtcreator
+                cargo-deny
               ];
             };
           packages = (
