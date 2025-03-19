@@ -27,7 +27,7 @@ args@{
   cargoConfig ? { },
 }:
 let
-  nixifiedLockHash = "cd0f1007fb587aeeac74cf75d77c8d4c3c0d745529de75df671e706b8271be9e";
+  nixifiedLockHash = "983b2c1afcf718f7a9ca56b747ef2dbb77debd4ee2df63dd1f4d99d2c05cc8fa";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -2164,7 +2164,7 @@ else
       };
       devDependencies = {
         tempfile =
-          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tempfile."3.19.0" {
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".tempfile."3.19.1" {
             inherit profileName;
           }).out;
         tokio =
@@ -2810,15 +2810,15 @@ else
           };
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".tempfile."3.19.0" =
+    "registry+https://github.com/rust-lang/crates.io-index".tempfile."3.19.1" =
       overridableMkRustCrate
         (profileName: rec {
           name = "tempfile";
-          version = "3.19.0";
+          version = "3.19.1";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "488960f40a3fd53d72c2a29a58722561dee8afdd175bd88e3db4677d7b2ba600";
+            sha256 = "7437ac7763b9b123ccf33c338a5cc1bac6f69b45a136c19bdd8a65e3916435bf";
           };
           features = builtins.concatLists [
             [ "default" ]
