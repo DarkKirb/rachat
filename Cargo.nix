@@ -28,7 +28,7 @@ args@{
   cargoConfig ? { },
 }:
 let
-  nixifiedLockHash = "124320fdca632c27333015432edee4921b54923a09b687eba35ec357f7dd3924";
+  nixifiedLockHash = "ca158b80b0b2566baea5bf847fdfa5cfe7a8a6e26ec0c82dd1771932f66d91ad";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -196,32 +196,6 @@ else
             [ "default" ]
             [ "std" ]
           ];
-        });
-
-    "registry+https://github.com/rust-lang/crates.io-index".async-trait."0.1.88" =
-      overridableMkRustCrate
-        (profileName: rec {
-          name = "async-trait";
-          version = "0.1.88";
-          registry = "registry+https://github.com/rust-lang/crates.io-index";
-          src = fetchCratesIo {
-            inherit name version;
-            sha256 = "e539d3fca749fcee5236ab05e93a52867dd549cc157c8cb7f99595f3cedffdb5";
-          };
-          dependencies = {
-            proc_macro2 =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".proc-macro2."1.0.94" {
-                inherit profileName;
-              }).out;
-            quote =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".quote."1.0.40" {
-                inherit profileName;
-              }).out;
-            syn =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".syn."2.0.100" {
-                inherit profileName;
-              }).out;
-          };
         });
 
     "registry+https://github.com/rust-lang/crates.io-index".autocfg."1.4.0" =
@@ -2818,10 +2792,6 @@ else
       registry = "unknown";
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
-        async_trait =
-          (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".async-trait."0.1.88" {
-            profileName = "__noProfile";
-          }).out;
         eyre =
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".eyre."0.6.12" {
             inherit profileName;
@@ -2834,6 +2804,10 @@ else
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".notify-debouncer-full."0.5.0"
             { inherit profileName; }
           ).out;
+        parking_lot =
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".parking_lot."0.12.3" {
+            inherit profileName;
+          }).out;
         rachat_misc = (rustPackages."unknown".rachat-misc."0.1.0" { inherit profileName; }).out;
         serde =
           (rustPackages."registry+https://github.com/rust-lang/crates.io-index".serde."1.0.219" {

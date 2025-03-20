@@ -7,7 +7,6 @@ use std::{
     sync::{Arc, Weak},
 };
 
-use async_trait::async_trait;
 use eyre::Result;
 use rachat_misc::id_generator;
 use serde_json::Value;
@@ -86,13 +85,12 @@ impl PlatformConfig {
     }
 }
 
-#[async_trait]
 impl ConfigSource for PlatformConfig {
     fn get_value(&self, key: &str) -> Result<Option<Value>> {
         Ok(self.config.get(key).cloned())
     }
 
-    async fn watch_property_with_notify(&self, _key: &str, notify: Arc<Notify>) -> WatcherHandle {
+    fn watch_property_with_notify(&self, _key: &str, notify: Arc<Notify>) -> WatcherHandle {
         WatcherHandle {
             watch_id: id_generator::generate(),
             config: self.own.clone(),

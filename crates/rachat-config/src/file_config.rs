@@ -3,19 +3,21 @@
 use std::{
     collections::{HashMap, HashSet},
     path::{Path, PathBuf},
-    sync::{Arc, Weak, mpsc},
-    thread,
+    sync::{Arc, Weak},
     time::Duration,
 };
 
-use async_trait::async_trait;
 use eyre::Result;
-use notify::{RecommendedWatcher, RecursiveMode};
+use notify::{
+    EventKind, RecommendedWatcher, RecursiveMode,
+    event::{AccessKind, AccessMode},
+};
 use notify_debouncer_full::{DebounceEventResult, Debouncer, RecommendedCache, new_debouncer};
+use parking_lot::{Mutex, RwLock};
 use rachat_misc::id_generator;
 use serde_json::Value;
-use tokio::sync::{Mutex, Notify, RwLock};
-use tracing::error;
+use tokio::sync::Notify;
+use tracing::{error, info};
 
 use crate::{ConfigSource, WatcherHandle};
 
@@ -49,13 +51,36 @@ impl FileConfig {
         Ok(crate::de::deserialize(toml))
     }
 
+    /// Writes the configuration file
+    async fn write_config(this: Weak<Self>) {
+        if let Some(arc) = this.upgrade() {
+            let as_json_value = match crate::ser::serialize(&arc.config.read()) {
+                Ok(v) => v,
+                Err(e) => {
+                    error!("Failed serializing updated configuration file: {e:?}");
+                    return;
+                }
+            };
+            let toml_string = match toml::to_string_pretty(&as_json_value) {
+                Ok(v) => v,
+                Err(e) => {
+                    error!("Failed serializing updated configuration file: {e:?}");
+                    return;
+                }
+            };
+            if let Err(e) = tokio::fs::write(&arc.fname, toml_string).await {
+                error!("Failed writing updated configuration: {e:?}")
+            }
+        }
+    }
+
     /// Notifies all relevant listeners
-    async fn notify_path(&self, path: &str) {
-        let listener_ids = self.path_listeners.read().await.get(path).cloned();
+    fn notify_path(&self, path: &str) {
+        let listener_ids = self.path_listeners.read().get(path).cloned();
 
         if let Some(listener_ids) = listener_ids {
             for listener_id in &listener_ids {
-                let l = self.id_to_notifies.read().await.get(listener_id).cloned();
+                let l = self.id_to_notifies.read().get(listener_id).cloned();
 
                 if let Some(l) = l {
                     l.notify_one();
@@ -68,15 +93,16 @@ impl FileConfig {
 
     /// Notifies for a change
     async fn notify_change(&self) -> Result<()> {
+        info!("Reloading config file {:?}", self.fname);
         let new_config = Self::read_config(&self.fname).await?;
         let mut old_config = new_config.clone();
-        std::mem::swap(&mut old_config, &mut *self.config.write().await);
+        std::mem::swap(&mut old_config, &mut *self.config.write());
         let mut keyset = HashSet::new();
         keyset.extend(new_config.keys().cloned());
         keyset.extend(old_config.keys().cloned());
         for key in keyset {
             if new_config.get(&key) != old_config.get(&key) {
-                self.notify_path(&key).await;
+                self.notify_path(&key);
             }
         }
         Ok(())
@@ -89,9 +115,28 @@ impl FileConfig {
 
         let config = Self::read_config(&fname).await?;
 
-        let (tx, rx) = mpsc::channel::<DebounceEventResult>();
+        let event = Arc::new(Notify::new());
+        let event2 = Arc::clone(&event);
 
-        let mut watcher = new_debouncer(Duration::from_millis(250), None, tx)?;
+        let mut watcher = new_debouncer(
+            Duration::from_millis(250),
+            None,
+            move |e: DebounceEventResult| match e {
+                Ok(evs) => {
+                    for ev in evs {
+                        if ev.event.kind == EventKind::Access(AccessKind::Close(AccessMode::Write))
+                        {
+                            event.notify_one();
+                        }
+                    }
+                }
+                Err(errs) => {
+                    for err in errs {
+                        error!("Error while listening to fs notifications: {err:?}");
+                    }
+                }
+            },
+        )?;
 
         watcher.watch(&fname, RecursiveMode::NonRecursive)?;
 
@@ -99,17 +144,13 @@ impl FileConfig {
             let fname2 = fname.clone();
             let arc2 = arc.clone();
 
-            thread::spawn(move || {
-                while let Ok(event) = rx.recv() {
-                    if let Err(e) = event {
-                        error!("Error watching {fname2:?}: {e:?}");
-                    } else if let Some(arc) = arc2.upgrade() {
-                        let fname3 = fname2.clone();
-                        tokio::spawn(async move {
-                            if let Err(e) = arc.notify_change().await {
-                                error!("Failed to notify file change to {fname3:?}: {e:?}");
-                            }
-                        });
+            tokio::task::spawn(async move {
+                loop {
+                    event2.notified().await;
+                    if let Some(arc) = arc2.upgrade() {
+                        if let Err(e) = arc.notify_change().await {
+                            error!("Failed to notify file change to {fname2:?}: {e:?}");
+                        }
                     } else {
                         break;
                     }
@@ -129,48 +170,39 @@ impl FileConfig {
     }
 }
 
-#[async_trait]
 impl ConfigSource for FileConfig {
     fn get_value(&self, key: &str) -> Result<Option<Value>> {
-        Ok(self.config.blocking_read().get(key).cloned())
+        Ok(self.config.read().get(key).cloned())
     }
 
     fn is_writeable(&self) -> bool {
         true
     }
 
-    async fn set_value(&self, key: &str, value: Value) -> Result<()> {
-        self.config.write().await.insert(key.to_string(), value);
-        self.notify_path(key).await;
+    fn set_value(&self, key: &str, value: Value) -> Result<()> {
+        self.config.write().insert(key.to_string(), value);
+        self.notify_path(key);
 
-        let as_json_value = crate::ser::serialize(&*self.config.read().await)?;
-
-        tokio::fs::write(&self.fname, toml::to_string_pretty(&as_json_value)?).await?;
+        tokio::spawn(Self::write_config(self.own.clone()));
 
         Ok(())
     }
 
-    async fn delete_inner(&self, key: &str) -> Result<()> {
-        self.config.write().await.remove(key);
-        self.notify_path(key).await;
+    fn delete_inner(&self, key: &str) -> Result<()> {
+        self.config.write().remove(key);
+        self.notify_path(key);
 
-        let as_json_value = crate::ser::serialize(&*self.config.read().await)?;
-
-        tokio::fs::write(&self.fname, toml::to_string_pretty(&as_json_value)?).await?;
+        tokio::spawn(Self::write_config(self.own.clone()));
 
         Ok(())
     }
 
-    async fn watch_property_with_notify(&self, key: &str, notify: Arc<Notify>) -> WatcherHandle {
+    fn watch_property_with_notify(&self, key: &str, notify: Arc<Notify>) -> WatcherHandle {
         let id = id_generator::generate();
-        self.id_to_notifies
-            .write()
-            .await
-            .insert(id, Arc::clone(&notify));
-        self.notifiers.lock().await.insert(id, key.to_string());
+        self.id_to_notifies.write().insert(id, Arc::clone(&notify));
+        self.notifiers.lock().insert(id, key.to_string());
         self.path_listeners
             .write()
-            .await
             .entry(key.to_string())
             .or_default()
             .insert(id);
@@ -182,11 +214,11 @@ impl ConfigSource for FileConfig {
     }
 
     fn delete_watcher(&self, watch_id: u128) {
-        let Some(path) = self.notifiers.blocking_lock().remove(&watch_id) else {
+        let Some(path) = self.notifiers.lock().remove(&watch_id) else {
             return;
         };
         {
-            let mut listeners = self.path_listeners.blocking_write();
+            let mut listeners = self.path_listeners.write();
             if let Some(listener_ids) = listeners.get_mut(&path) {
                 listener_ids.remove(&watch_id);
                 if listener_ids.is_empty() {
@@ -194,6 +226,5 @@ impl ConfigSource for FileConfig {
                 }
             }
         }
-        todo!();
     }
 }
