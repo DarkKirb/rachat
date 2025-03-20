@@ -1,6 +1,8 @@
 //! Miscellaneous rachat components
 //!
 //! These are all things that could be independent of rachat
+
+pub mod id_generator;
 pub mod logging;
 pub mod paths;
 

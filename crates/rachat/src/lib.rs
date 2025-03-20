@@ -1,22 +1,45 @@
 //! The root crate for rachat
+use std::sync::Arc;
+
 use eyre::Result;
+use rachat_config::{ConfigSource, global_config};
+use rachat_misc::paths::Directories;
 use tracing::info;
 
-/// Starts the main rachat application
-///
-/// # Errors
-///
-/// This function returns an error if a fatal error occurs during startup or execution.
-#[expect(clippy::unused_async, reason = "API futureproofing")]
-pub async fn start() -> Result<()> {
-    rachat_misc::logging::init()?;
+/// Main Rachat application
+#[derive(Clone, Debug)]
+pub struct Rachat {
+    /// Configuration store for rachat
+    configuration: Arc<dyn ConfigSource + Send + Sync>,
+}
 
-    info!("Starting rachat…");
-    info!(
-        "Rachat is Free Software, released under the {} license. You can find the source code at {}.",
-        env!("CARGO_PKG_LICENSE"),
-        env!("CARGO_PKG_REPOSITORY")
-    );
+impl Rachat {
+    /// Initializes the main rachat application
+    ///
+    /// # Errors
+    ///
+    /// This function returns an error if a fatal error occurs during startup.
+    pub async fn new() -> Result<Arc<Self>> {
+        rachat_misc::logging::init()?;
 
-    Ok(())
+        info!("Starting rachat…");
+        info!(
+            "Rachat is Free Software, released under the {} license. You can find the source code at {}.",
+            env!("CARGO_PKG_LICENSE"),
+            env!("CARGO_PKG_REPOSITORY")
+        );
+
+        let directories = Directories::new()?;
+        let config_path = directories.config().await?.join("config.toml");
+
+        Ok(Arc::new(Self {
+            configuration: global_config(config_path).await?,
+        }))
+    }
+
+    /// Access the configuration store
+    #[must_use]
+    pub fn config(&self) -> Arc<dyn ConfigSource + Send + Sync> {
+        Arc::clone(&self.configuration)
+    }
 }

@@ -20,8 +20,8 @@ We do not consider this change to be necessary if:
 1. You contribute the change as a Pull Request to the [project’s GitHub
    Repository](https://github.com/DarkKirb/rachat)
 2. Or if the change is technically necessary to facilitate packaging or
-   distribution and only affects dependencies, build definitions, or
-   build scripts.
+   distribution and only affects dependencies, build definitions, build
+   scripts, or the built-in default config.toml file.
 
 ## EUROPEAN UNION PUBLIC LICENCE v. 1.2 
 
