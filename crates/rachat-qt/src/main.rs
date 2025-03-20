@@ -12,7 +12,7 @@ use tracing::info;
 #[tokio::main]
 async fn main() -> Result<()> {
     let rachat = Rachat::new().await?;
-    tokio::task::spawn_blocking(|| start(rachat));
+    tokio::task::spawn_blocking(|| start(rachat)).await??;
     Ok(())
 }
 

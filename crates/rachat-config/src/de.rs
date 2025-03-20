@@ -13,7 +13,11 @@ fn flatten(hm: &mut HashMap<String, Value>, key: String, value: Value) {
     match value {
         Value::Object(map) => {
             for (k, v) in map {
-                flatten(hm, format!("{key}.{k}"), v);
+                if key.is_empty() {
+                    flatten(hm, k, v);
+                } else {
+                    flatten(hm, format!("{key}.{k}"), v);
+                }
             }
         }
         _ => {

@@ -18,15 +18,15 @@ use std::{
     sync::{Arc, Weak},
 };
 
-use async_trait::async_trait;
 use eyre::Result;
 use file_config::FileConfig;
+use parking_lot::Mutex;
 use platform_config::PlatformConfig;
 use rachat_misc::id_generator;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use static_config::StaticConfig;
-use tokio::sync::{Mutex, Notify};
+use tokio::sync::Notify;
 
 mod de;
 mod file_config;
@@ -63,7 +63,6 @@ impl Drop for WatcherHandle {
 }
 
 /// A single configuration source
-#[async_trait]
 pub trait ConfigSource: Debug {
     /// Retrieves a configuration value from this source
     ///
@@ -86,7 +85,7 @@ pub trait ConfigSource: Debug {
     /// # Errors
     ///
     /// This function returns an error if the configuration value could not be serialized, or the configuration file couldn’t be saved, or the configuration file doesn’t support writing.
-    async fn set_value(&self, _key: &str, _value: Value) -> Result<()> {
+    fn set_value(&self, _key: &str, _value: Value) -> Result<()> {
         eyre::bail!("Configuration store is not writeable")
     }
 
@@ -95,7 +94,7 @@ pub trait ConfigSource: Debug {
     /// # Errors
     ///
     /// This function returns an error if the configuration source is not modifiable.
-    async fn delete_inner(&self, _key: &str) -> Result<()> {
+    fn delete_inner(&self, _key: &str) -> Result<()> {
         eyre::bail!("Configuration store is not writeable")
     }
 
@@ -104,9 +103,9 @@ pub trait ConfigSource: Debug {
     /// This watcher uses [`Notify`] to resume execution of tasks that wait for config values to change.
     ///
     /// [`Notify`]: tokio::sync::Notify
-    async fn watch_property(&self, key: &str) -> WatcherHandle {
+    fn watch_property(&self, key: &str) -> WatcherHandle {
         let notify = Arc::new(Notify::new());
-        self.watch_property_with_notify(key, notify).await
+        self.watch_property_with_notify(key, notify)
     }
 
     /// Adds a watcher for a specific property name
@@ -114,7 +113,7 @@ pub trait ConfigSource: Debug {
     /// This watcher uses [`Notify`] to resume execution of tasks that wait for config values to change.
     ///
     /// [`Notify`]: tokio::sync::Notify
-    async fn watch_property_with_notify(&self, key: &str, notify: Arc<Notify>) -> WatcherHandle;
+    fn watch_property_with_notify(&self, key: &str, notify: Arc<Notify>) -> WatcherHandle;
 
     /// Deletes a watcher by ID.
     ///
@@ -155,11 +154,9 @@ pub trait ConfigSourceExt: ConfigSource + Send + Sync {
         &self,
         key: N,
         value: S,
-    ) -> impl Future<Output = Result<()>> + Send {
-        async move {
-            let value = value.serialize(serde_json::value::Serializer)?;
-            self.set_value(key.as_ref(), value).await
-        }
+    ) -> Result<()> {
+        let value = value.serialize(serde_json::value::Serializer)?;
+        self.set_value(key.as_ref(), value)
     }
 
     /// Deletes a configuration value from this store.
@@ -167,11 +164,8 @@ pub trait ConfigSourceExt: ConfigSource + Send + Sync {
     /// # Errors
     ///
     /// This function returns an error if the configuration source is not modifiable.
-    fn delete<N: AsRef<str> + Send + Sync>(
-        &self,
-        key: N,
-    ) -> impl Future<Output = Result<()>> + Send {
-        async move { self.delete_inner(key.as_ref()).await }
+    fn delete<N: AsRef<str> + Send + Sync>(&self, key: N) -> Result<()> {
+        self.delete_inner(key.as_ref())
     }
 }
 
@@ -210,7 +204,6 @@ where
     }
 }
 
-#[async_trait]
 impl<P, S> ConfigSource for ConfigurationOverlay<P, S>
 where
     P: ConfigSource + Send + Sync + 'static,
@@ -227,26 +220,24 @@ where
         self.source.is_writeable()
     }
 
-    async fn set_value(&self, key: &str, value: Value) -> Result<()> {
-        self.source.set_value(key, value).await
+    fn set_value(&self, key: &str, value: Value) -> Result<()> {
+        self.source.set_value(key, value)
     }
 
-    async fn delete_inner(&self, key: &str) -> Result<()> {
-        self.source.delete_inner(key).await
+    fn delete_inner(&self, key: &str) -> Result<()> {
+        self.source.delete_inner(key)
     }
 
-    async fn watch_property_with_notify(&self, key: &str, notify: Arc<Notify>) -> WatcherHandle {
+    fn watch_property_with_notify(&self, key: &str, notify: Arc<Notify>) -> WatcherHandle {
         let parent = self
             .parent
-            .watch_property_with_notify(key, Arc::clone(&notify))
-            .await;
+            .watch_property_with_notify(key, Arc::clone(&notify));
         let child = self
             .source
-            .watch_property_with_notify(key, Arc::clone(&notify))
-            .await;
+            .watch_property_with_notify(key, Arc::clone(&notify));
         let id = id_generator::generate();
 
-        self.notifiers.lock().await.insert(id, (parent, child));
+        self.notifiers.lock().insert(id, (parent, child));
 
         WatcherHandle {
             watch_id: id,
@@ -256,7 +247,7 @@ where
     }
 
     fn delete_watcher(&self, watch_id: u128) {
-        self.notifiers.blocking_lock().remove(&watch_id);
+        self.notifiers.lock().remove(&watch_id);
     }
 }
 
