@@ -9,4 +9,8 @@
 # Depending on platform, a variety of styles are available.
 # Rachat attempts to choose one that looks approximately like the platform theme.
 
-# platform = "Fusion"
+# style = "Fusion"
+
+# [profile]
+# The default profile name to use when starting up
+# default = "default"
