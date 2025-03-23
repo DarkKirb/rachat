@@ -2,7 +2,9 @@
 use std::sync::Arc;
 
 use eyre::Result;
-use rachat_config::{ConfigSource, global_config};
+use rachat_config::{
+    ConfigSource, ConfigSourceExt, ConfigurationOverlay, FileConfig, global_config,
+};
 use rachat_misc::paths::Directories;
 use tracing::info;
 
@@ -32,8 +34,19 @@ impl Rachat {
         let directories = Directories::new()?;
         let config_path = directories.config().await?.join("config.toml");
 
+        let global_config = global_config(config_path).await?;
+
+        let profile = global_config
+            .get::<_, String>("profile.default")?
+            .unwrap_or_else(|| "default".to_string());
+
+        info!("Using profile {profile}");
+
+        let profile_config: Arc<FileConfig> =
+            FileConfig::new(directories.config().await?.join(format!("{profile}.toml"))).await?;
+
         Ok(Arc::new(Self {
-            configuration: global_config(config_path).await?,
+            configuration: ConfigurationOverlay::new(global_config, profile_config),
         }))
     }
 

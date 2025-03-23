@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
 /// Start the QT Application
 #[allow(clippy::needless_pass_by_value)]
 fn start(rachat: Arc<Rachat>) -> Result<()> {
-    if let Some(qml_style) = rachat.config().get::<_, String>("qt.style")? {
+    if let Some(qml_style) = rachat.config().get::<_, String>("gui.qt.style")? {
         info!("Setting QML Style to: {qml_style}");
         QQuickStyle::set_style(&QString::from(&*qml_style));
     }

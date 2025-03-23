@@ -19,7 +19,6 @@ use std::{
 };
 
 use eyre::Result;
-use file_config::FileConfig;
 use parking_lot::Mutex;
 use platform_config::PlatformConfig;
 use rachat_misc::id_generator;
@@ -33,6 +32,8 @@ mod file_config;
 mod platform_config;
 mod ser;
 mod static_config;
+
+pub use file_config::FileConfig;
 
 /// A handle for the watcher
 ///
@@ -175,8 +176,8 @@ impl<T: ConfigSource + Send + Sync + ?Sized> ConfigSourceExt for T {}
 #[derive(Debug)]
 pub struct ConfigurationOverlay<P, S>
 where
-    P: ConfigSource,
-    S: ConfigSource,
+    P: ConfigSource + ?Sized,
+    S: ConfigSource + ?Sized,
 {
     /// A reference to itself for the watcher
     own: Weak<Self>,
@@ -190,8 +191,8 @@ where
 
 impl<P, S> ConfigurationOverlay<P, S>
 where
-    P: ConfigSource,
-    S: ConfigSource,
+    P: ConfigSource + ?Sized,
+    S: ConfigSource + ?Sized,
 {
     /// Creates a new layer configuration source
     pub fn new(parent: Arc<P>, source: Arc<S>) -> Arc<Self> {
@@ -206,8 +207,8 @@ where
 
 impl<P, S> ConfigSource for ConfigurationOverlay<P, S>
 where
-    P: ConfigSource + Send + Sync + 'static,
-    S: ConfigSource + Send + Sync + 'static,
+    P: ConfigSource + Send + Sync + ?Sized + 'static,
+    S: ConfigSource + Send + Sync + ?Sized + 'static,
 {
     fn get_value(&self, key: &str) -> Result<Option<Value>> {
         match self.source.get_value(key) {

@@ -45,7 +45,10 @@ impl PlatformConfig {
             return;
         }
 
-        hm.insert("qt.style".to_string(), Value::String("Fusion".to_string()));
+        hm.insert(
+            "gui.qt.style".to_string(),
+            Value::String("Fusion".to_string()),
+        );
 
         #[cfg(any(
             cxxqt_qt_version_at_least_5_7,
@@ -55,7 +58,7 @@ impl PlatformConfig {
         if version >= WindowsVersion::new(10, 0, 0) {
             // Windows 10 and later
             hm.insert(
-                "qt.style".to_string(),
+                "gui.qt.style".to_string(),
                 Value::String("Universal".to_string()),
             );
         }
@@ -64,7 +67,7 @@ impl PlatformConfig {
         if version >= WindowsVersion::new(10, 0, 22000) {
             // Windows 11 and later
             hm.insert(
-                "qt.style".to_string(),
+                "gui.qt.style".to_string(),
                 Value::String("FluentWinUI3".to_string()),
             );
         }
@@ -72,8 +75,12 @@ impl PlatformConfig {
 
     /// Creates a new platform configuration
     pub fn new() -> Arc<Self> {
-        #[allow(unused_mut, reason = "Conditional code")]
         let mut config = HashMap::new();
+
+        config.insert(
+            "profile.default".to_string(),
+            Value::String("default".to_string()),
+        );
 
         #[cfg(windows)]
         Self::add_windows_properties(&mut config);
