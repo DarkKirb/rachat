@@ -10,5 +10,10 @@
         "fileFilters": [
             "Cargo.*"
         ]
+    },
+    "automerge": true,
+    "lockFileMaintenance": {
+        "enabled": true,
+        "automerge": true
     }
 }
