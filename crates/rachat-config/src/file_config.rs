@@ -54,7 +54,8 @@ impl FileConfig {
     /// Writes the configuration file
     async fn write_config(this: Weak<Self>) {
         if let Some(arc) = this.upgrade() {
-            let as_json_value = match crate::ser::serialize(&arc.config.read()) {
+            let value = crate::ser::serialize(&arc.config.read());
+            let as_json_value = match value {
                 Ok(v) => v,
                 Err(e) => {
                     error!("Failed serializing updated configuration file: {e:?}");
@@ -69,7 +70,7 @@ impl FileConfig {
                 }
             };
             if let Err(e) = tokio::fs::write(&arc.fname, toml_string).await {
-                error!("Failed writing updated configuration: {e:?}")
+                error!("Failed writing updated configuration: {e:?}");
             }
         }
     }
@@ -110,6 +111,9 @@ impl FileConfig {
 
     /// Creates a new mutable configuration file
     ///
+    /// # Errors
+    ///
+    /// This function returns an error if the config file could not be read.
     pub async fn new(fname: impl Into<PathBuf>) -> Result<Arc<Self>> {
         let fname: PathBuf = fname.into();
 
