@@ -11,6 +11,7 @@ clap = { version = "4.5.32", features = ["derive"] }
 color-eyre = "0.6.3"
 eyre = "0.6.12"
 rachat-config = { version = "0.1.0", path = "../rachat-config" }
+rachat-i18n = { version = "0.1.0", path = "../rachat-i18n" }
 rachat-misc = { version = "0.1.0", path = "../rachat-misc" }
 tokio = { version = "1.44.1", features = ["fs"] }
 tracing = "0.1.41"
