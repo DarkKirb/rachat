@@ -17,7 +17,6 @@ use fluent_templates::{langid, static_loader};
 use nonempty::NonEmpty;
 use rachat_config::{Config, ConfigSourceExt};
 use tokio::{select, sync::Notify};
-use tracing::error;
 use unic_langid_impl::LanguageIdentifier;
 
 static_loader! {
@@ -121,7 +120,8 @@ impl Localizer {
                     () = watcher.notified() => {
                         if let Some(langs) = weak_langs.upgrade() {
                             if let Err(e) = Self::update_langs(&cfg2, &langs) {
-                                error!("Failed to update languages: {e:?}");
+                                let error = format!("{e:?}");
+                                error!(failed_updating_languages, error = error);
                             }
                         } else {
                             break;

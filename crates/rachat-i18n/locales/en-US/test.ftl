@@ -1,0 +1,1 @@
+rust_test_hello = Hi from Rust! String is “{ $string }” and number is { $number }.
