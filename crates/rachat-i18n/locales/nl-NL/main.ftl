@@ -1,3 +1,3 @@
 starting_rachat = start Rachat…
-rachat_copyright = Rachat is een vrĳe software, vrĳgegeven onder de {-crate-license} licentie. Je kunt de broncode hier vinden: {-crate-repository}
-using_profile = gebruike profiel „{$profile}”.
+rachat_copyright = Rachat is een vrĳe software, vrĳgegeven onder de { -crate-license } licentie. Je kunt de broncode hier vinden: { -crate-repository }
+using_profile = gebruike profiel „{ $profile }”.
