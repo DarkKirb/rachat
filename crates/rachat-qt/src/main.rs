@@ -7,7 +7,7 @@ use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QQuickStyle, QString, Q
 use eyre::Result;
 use rachat::Rachat;
 use rachat_config::ConfigSourceExt;
-use tracing::info;
+use rachat_i18n::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,7 +20,7 @@ async fn main() -> Result<()> {
 #[allow(clippy::needless_pass_by_value)]
 fn start(rachat: Arc<Rachat>) -> Result<()> {
     if let Some(qml_style) = rachat.config().get::<_, String>("gui.qt.style")? {
-        info!("Setting QML Style to: {qml_style}");
+        info!(using_qml_style, style = qml_style);
         QQuickStyle::set_style(&QString::from(&*qml_style));
     }
     // Create the application and engine

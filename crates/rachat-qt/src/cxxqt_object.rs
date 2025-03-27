@@ -32,12 +32,16 @@ pub mod qobject {
         #[qinvokable]
         #[cxx_name = "sayHi"]
         fn say_hi(self: &MyObject, string: &QString, number: i32);
+
+        #[qinvokable]
+        #[cxx_name = "trans"]
+        fn trans(self: &MyObject, string: &QString) -> QString;
     }
 }
 
 use core::pin::Pin;
 use cxx_qt_lib::QString;
-use tracing::info;
+use rachat_i18n::info;
 
 /// The Rust struct for the `QObject`
 #[derive(Default)]
@@ -57,6 +61,14 @@ impl qobject::MyObject {
 
     /// Print a log message with the given string and number
     pub fn say_hi(&self, string: &QString, number: i32) {
-        info!("Hi from Rust! String is '{string}' and number is {number}");
+        let string = string.to_string();
+        info!(rust_test_hello, string = string, number = number);
+    }
+
+    /// Translates a string
+    pub fn trans(&self, string: &QString) -> QString {
+        let key = string.to_string();
+        let res = rachat_i18n::ඞ::localize(&key, None);
+        QString::from(res)
     }
 }

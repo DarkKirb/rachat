@@ -40,3 +40,14 @@ macro_rules! info {
         $crate::event!($crate::tracing::Level::INFO, $msgid, $($argname = $argval),+);
     };
 }
+
+/// Logs a localized message  with the error level
+#[macro_export]
+macro_rules! error {
+    ($msgid:ident) => {
+        $crate::event!($crate::tracing::Level::ERROR, $msgid);
+    };
+    ($msgid:ident, $($argname: ident = $argval: expr),+) => {
+        $crate::event!($crate::tracing::Level::ERROR, $msgid, $($argname = $argval),+);
+    };
+}

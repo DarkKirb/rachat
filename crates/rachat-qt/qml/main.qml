@@ -35,19 +35,19 @@ ApplicationWindow {
         }
 
         Button {
-            text: qsTr("Increment Number")
+            text: myObject.trans("increment_number_button")
 
             onClicked: myObject.incrementNumber()
         }
 
         Button {
-            text: qsTr("Say Hi!")
+            text: myObject.trans("say_hi_button")
 
             onClicked: myObject.sayHi(myObject.string, myObject.number)
         }
 
         Button {
-            text: qsTr("Quit")
+            text: myObject.trans("quit_button")
 
             onClicked: Qt.quit()
         }
