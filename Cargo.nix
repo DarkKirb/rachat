@@ -28,7 +28,7 @@ args@{
   cargoConfig ? { },
 }:
 let
-  nixifiedLockHash = "bbe73636cca176b2f2ac14f3dd2fba08ba494ed5232cc7f754d4ca1b1d9757c5";
+  nixifiedLockHash = "97a7fb17fb446ffe33ffad7df29f1c2b0843bd70ad4275c63e78a6c0f69f5306";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -719,15 +719,15 @@ else
           };
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".clap."4.5.33" =
+    "registry+https://github.com/rust-lang/crates.io-index".clap."4.5.34" =
       overridableMkRustCrate
         (profileName: rec {
           name = "clap";
-          version = "4.5.33";
+          version = "4.5.34";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "e2c80cae4c3350dd8f1272c73e83baff9a6ba550b8bfbe651b3c45b78cd1751e";
+            sha256 = "e958897981290da2a852763fe9cdb89cd36977a5d729023127095fa94d95e2ff";
           };
           features = builtins.concatLists [
             [ "color" ]
@@ -741,7 +741,7 @@ else
           ];
           dependencies = {
             clap_builder =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap_builder."4.5.33" {
+              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap_builder."4.5.34" {
                 inherit profileName;
               }).out;
             clap_derive =
@@ -751,15 +751,15 @@ else
           };
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".clap_builder."4.5.33" =
+    "registry+https://github.com/rust-lang/crates.io-index".clap_builder."4.5.34" =
       overridableMkRustCrate
         (profileName: rec {
           name = "clap_builder";
-          version = "4.5.33";
+          version = "4.5.34";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "0123e386f691c90aa228219b5b1ee72d465e8e231c79e9c82324f016a62a741c";
+            sha256 = "83b0f35019843db2160b5bb19ae09b4e6411ac33fc6a712003c33e03090e2489";
           };
           features = builtins.concatLists [
             [ "color" ]
@@ -1307,7 +1307,7 @@ else
           };
           dependencies = {
             clap =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.33" {
+              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.34" {
                 inherit profileName;
               }).out;
             codespan_reporting =
@@ -2998,7 +2998,7 @@ else
       src = fetchCrateLocal workspaceSrc;
       dependencies = {
         clap =
-          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.33" {
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".clap."4.5.34" {
             inherit profileName;
           }).out;
         color_eyre =
