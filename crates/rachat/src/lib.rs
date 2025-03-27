@@ -4,10 +4,10 @@ use std::sync::Arc;
 use clap::Parser;
 use eyre::Result;
 use rachat_config::{
-    ConfigSource, ConfigSourceExt, ConfigurationOverlay, FileConfig, global_config,
+    Config, ConfigSource, ConfigSourceExt, ConfigurationOverlay, FileConfig, global_config,
 };
+use rachat_i18n::{Localizer, info};
 use rachat_misc::paths::Directories;
-use tracing::info;
 
 /// Command line arguments for rachat
 #[derive(Parser, Debug)]
@@ -22,7 +22,9 @@ struct Args {
 #[derive(Clone, Debug)]
 pub struct Rachat {
     /// Configuration store for rachat
-    configuration: Arc<dyn ConfigSource + Send + Sync>,
+    configuration: Config,
+    /// Localizer handle
+    _localizer: Arc<Localizer>,
 }
 
 impl Rachat {
@@ -36,13 +38,6 @@ impl Rachat {
 
         let args = Args::parse();
 
-        info!("Starting rachat…");
-        info!(
-            "Rachat is Free Software, released under the {} license. You can find the source code at {}.",
-            env!("CARGO_PKG_LICENSE"),
-            env!("CARGO_PKG_REPOSITORY")
-        );
-
         let directories = Directories::new()?;
         let config_path = directories.config().await?.join("config.toml");
 
@@ -55,13 +50,20 @@ impl Rachat {
                 .unwrap_or_else(|| "default".to_string()),
         };
 
-        info!("Using profile {profile}");
-
         let profile_config: Arc<FileConfig> =
             FileConfig::new(directories.config().await?.join(format!("{profile}.toml"))).await?;
 
+        let configuration: Config = ConfigurationOverlay::new(global_config, profile_config);
+
+        let localizer = Localizer::new(&configuration)?;
+
+        info!(starting_rachat);
+        info!(rachat_copyright);
+        info!(using_profile, profile = profile);
+
         Ok(Arc::new(Self {
-            configuration: ConfigurationOverlay::new(global_config, profile_config),
+            configuration,
+            _localizer: localizer,
         }))
     }
 

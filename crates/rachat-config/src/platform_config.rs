@@ -73,6 +73,14 @@ impl PlatformConfig {
         }
     }
 
+    fn get_langs_value() -> Value {
+        let mut langs = Vec::new();
+        for lang in sys_locale::get_locales() {
+            langs.push(Value::String(lang));
+        }
+        Value::Array(langs)
+    }
+
     /// Creates a new platform configuration
     pub fn new() -> Arc<Self> {
         let mut config = HashMap::new();
@@ -81,6 +89,8 @@ impl PlatformConfig {
             "profile.default".to_string(),
             Value::String("default".to_string()),
         );
+
+        config.insert("i18n.langs".to_string(), Self::get_langs_value());
 
         #[cfg(windows)]
         Self::add_windows_properties(&mut config);

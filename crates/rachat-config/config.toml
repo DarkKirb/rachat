@@ -14,3 +14,9 @@
 # [profile]
 # The default profile name to use when starting up
 # default = "default"
+
+# [i18n]
+# The languages to display in the UI
+# These are in preference, with the first one being the most preferred.
+# This overrides global user language settings!
+# langs = ["en-US"]

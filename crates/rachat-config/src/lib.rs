@@ -35,6 +35,9 @@ mod static_config;
 
 pub use file_config::FileConfig;
 
+/// Type alias for a config source
+pub type Config = Arc<dyn ConfigSource + Send + Sync>;
+
 /// A handle for the watcher
 ///
 /// Dropping it will automatically end the notifications from being delivered
