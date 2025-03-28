@@ -171,7 +171,7 @@
                   };
                 })
                 (pkgs.rustBuilder.rustLib.makeOverride {
-                  name = "rachat-qt";
+                  name = "rachat";
                   overrideAttrs = drv: {
                     preConfigure = ''
                       export PATH="${qtMerged}/bin:$PATH"

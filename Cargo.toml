@@ -1,22 +1,78 @@
-[workspace]
-resolver = "3"
-members = ["crates/*"]
-
-[workspace.package]
+[package]
+name = "rachat"
 version = "0.1.0"
 repository = "https://github.com/DarkKirb/rachat"
 edition = "2024"
 authors = ["Charlotte 🦝 Deleńkec <lotte@chir.rs>"]
 license = "EUPL-1.2"
 
-[workspace.lints.rust]
+[dependencies]
+arc-swap = "1.7.1"
+chrono = "0.4.40"
+clap = { version = "4.5.34", features = ["derive"] }
+color-eyre = "0.6.3"
+cxx = "1.0.151"
+cxx-qt = "0.7.1"
+cxx-qt-lib = { version = "0.7.1", features = [
+    "qt_gui",
+    "qt_qml",
+    "qt_quickcontrols",
+] }
+directories = "6.0.0"
+eyre = "0.6.12"
+fluent-bundle = "0.15.3"
+fluent-langneg = { version = "0.14.1", features = ["cldr"] }
+fluent-templates = "0.13.0"
+icu_locid = { version = "1.5.0", features = ["serde"] }
+nonempty = "0.11.0"
+notify = "8.0.0"
+notify-debouncer-full = "0.5.0"
+parking_lot = "0.12.3"
+rand = "0.9.0"
+serde = "1.0.219"
+serde_json = "1.0.140"
+sys-locale = "0.3.2"
+thiserror = "2.0.12"
+tokio = { version = "1.44.1", features = [
+    "fs",
+    "macros",
+    "rt",
+    "rt-multi-thread",
+    "sync",
+] }
+toml = "0.8.20"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
+unic-langid-impl = { version = "0.9.5", features = ["serde"] }
+
+[target.'cfg(windows)'.dependencies]
+tracing-etw = "0.2.1"
+winver = "1"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+tracing-oslog = "0.2.0"
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+dashmap = "6.1.0"
+tempfile = "=3.19.1"
+tokio = { version = "=1.44.1", features = ["fs", "macros", "rt"] }
+
+[build-dependencies]
+cxx-qt-build = "0.7.1"
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
+[lints.rust]
 unsafe-code = "deny"
 deprecated-safe = "forbid"
 future-incompatible = "deny"
 missing-docs = "warn"
 variant-size-differences = "warn"
 
-[workspace.lints.clippy]
+[lints.clippy]
 nursery = { level = "warn", priority = -2 }
 pedantic = { level = "warn", priority = -1 }
 panic = "deny"
