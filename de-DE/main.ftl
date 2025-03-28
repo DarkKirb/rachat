@@ -1,3 +1,0 @@
-starting_rachat = Starte Rachat…
-rachat_copyright = Rachat ist freie Software, herausgegeben unter der {-crate-license}-Lizens. Du kannst den Quellcode hier finden: {-crate-repository}
-using_profile = Benutze Profil „{$profile}“.
