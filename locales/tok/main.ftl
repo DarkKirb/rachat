@@ -1,3 +1,12 @@
 starting_rachat = o open ilo Laka…
 rachat_copyright = ilo Laka li ilo pona. mi pona e ni kepeken lawa { -crate-license }. sina ken alasa e lipu pali tan ni: { -crate-repository }
 using_profile = kepeken poki "{ $profile }".
+using_qml_style = o ante e lukin ilo tawa lukin “{ $style }”
+failed_updating_languages = mi pakala ante e toki mute tan ni: { $error }
+increment_number_button = o suli e nanpa
+say_hi_button = o toki!
+quit_button = o pini
+rust_test_hello = toki tan toki ilo Laso! lipu li “{ $string }”. nanpa li { $number }.
+test_string = lipu mi li poki e nanpa mi: { $number }
+test_number_label = nanpa: { $number }
+test_string_label = lipu: { $string }
