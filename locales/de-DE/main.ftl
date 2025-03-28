@@ -1,3 +1,12 @@
 starting_rachat = Starte Rachat…
 rachat_copyright = Rachat ist freie Software, herausgegeben unter der { -crate-license }-Lizens. Du kannst den Quellcode hier finden: { -crate-repository }
 using_profile = Benutze Profil „{ $profile }“.
+using_qml_style = QML-Stil auf „{ $style }“ ändern
+failed_updating_languages = Konne Sprachen nicht aktualisieren: { $error }
+increment_number_button = Zahl erhöhen
+say_hi_button = Sag Hallo!
+quit_button = Schließen
+rust_test_hello = Hallo von Rust! Die Zeichenkette ist „{ $string }“ und die Zahl ist { $number }.
+test_string = Meine Zeichenkette mit Zahl: { $number }
+test_number_label = Zahl: { $number }
+test_string_label = Zeichenkette: { $string }
