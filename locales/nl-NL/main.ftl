@@ -1,3 +1,12 @@
 starting_rachat = start Rachat…
 rachat_copyright = Rachat is een vrĳe software, vrĳgegeven onder de { -crate-license } licentie. Je kunt de broncode hier vinden: { -crate-repository }
 using_profile = gebruike profiel „{ $profile }”.
+using_qml_style = QML-stĳl instellen op: „{ $style }”
+failed_updating_languages = De update van de taallĳst is niet gelukt: { $error }
+increment_number_button = verhoog het nummer
+say_hi_button = Zeg hallo!
+quit_button = Verlaten
+rust_test_hello = Hallo vanuit Rust! De string is „{ $string }” en het nummer is { $number }.
+test_string = Mĳn string met mĳn nummer: { $number }
+test_number_label = Nummer: { $number }
+test_string_label = String: { $string }
