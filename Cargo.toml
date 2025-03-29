@@ -53,8 +53,8 @@ winver = "1"
 tracing-oslog = "0.2.0"
 
 [dev-dependencies]
-criterion = { version = "0.5.1", features = ["html_reports"] }
-dashmap = "6.1.0"
+criterion = { version = "=0.5.1", features = ["html_reports"] }
+dashmap = "=6.1.0"
 tempfile = "=3.19.1"
 tokio = { version = "=1.44.1", features = ["fs", "macros", "rt"] }
 
