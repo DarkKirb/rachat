@@ -3,7 +3,7 @@
 
   inputs = {
     cargo2nix = {
-      url = "github:DarkKirb/cargo2nix/metadata-workaround";
+      url = "github:cargo2nix/cargo2nix/main";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
       inputs.rust-overlay.follows = "rust-overlay";
