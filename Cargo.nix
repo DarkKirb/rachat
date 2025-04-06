@@ -25,7 +25,7 @@ args@{
   cargoConfig ? { },
 }:
 let
-  nixifiedLockHash = "82ac5fe7ef4b66d982a71944e729bced98e09534d5f2fd0e3ccb5804f25d344d";
+  nixifiedLockHash = "2ff51a1a0f0a2d52b0e0bad52c74c32f179f1d626c90a6c04325be8396b6a0e8";
   workspaceSrc = if args.workspaceSrc == null then ./. else args.workspaceSrc;
   currentLockHash = builtins.hashFile "sha256" (workspaceSrc + /Cargo.lock);
   lockHashIgnored =
@@ -1336,15 +1336,15 @@ else
           ];
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.154" =
+    "registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.155" =
       overridableMkRustCrate
         (profileName: rec {
           name = "cxx";
-          version = "1.0.154";
+          version = "1.0.155";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "e0e131d2ffd5c1896837be4d9be3c084709efe4e2b86be4fcc18928fcd4b05df";
+            sha256 = "76751bca18309cbce06f9821698d6c05b3af5c3fde8af5caf57f11611729397b";
           };
           features = builtins.concatLists [
             [ "alloc" ]
@@ -1353,7 +1353,7 @@ else
           ];
           dependencies = {
             cxxbridge_macro =
-              (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".cxxbridge-macro."1.0.154"
+              (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".cxxbridge-macro."1.0.155"
                 { profileName = "__noProfile"; }
               ).out;
             foldhash =
@@ -1371,21 +1371,21 @@ else
                 profileName = "__noProfile";
               }).out;
             cxxbridge_flags =
-              (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".cxxbridge-flags."1.0.154"
+              (buildRustPackages."registry+https://github.com/rust-lang/crates.io-index".cxxbridge-flags."1.0.155"
                 { profileName = "__noProfile"; }
               ).out;
           };
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".cxx-gen."0.7.154" =
+    "registry+https://github.com/rust-lang/crates.io-index".cxx-gen."0.7.155" =
       overridableMkRustCrate
         (profileName: rec {
           name = "cxx-gen";
-          version = "0.7.154";
+          version = "0.7.155";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "71d036b71c78164f646687a919f9539a0c10cb203487252c6671da6f438d22cd";
+            sha256 = "47f8cf383c7f4920c90d0d003f72702cd7e540f69e5cb5959632f94fa589b915";
           };
           dependencies = {
             codespan_reporting =
@@ -1419,7 +1419,7 @@ else
           };
           dependencies = {
             cxx =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.154" {
+              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.155" {
                 inherit profileName;
               }).out;
             cxx_qt_macro =
@@ -1467,7 +1467,7 @@ else
                 inherit profileName;
               }).out;
             cxx_gen =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx-gen."0.7.154" {
+              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx-gen."0.7.155" {
                 inherit profileName;
               }).out;
             cxx_qt_gen =
@@ -1557,7 +1557,7 @@ else
           ];
           dependencies = {
             cxx =
-              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.154" {
+              (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.155" {
                 inherit profileName;
               }).out;
             cxx_qt =
@@ -1603,15 +1603,15 @@ else
           };
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".cxxbridge-cmd."1.0.154" =
+    "registry+https://github.com/rust-lang/crates.io-index".cxxbridge-cmd."1.0.155" =
       overridableMkRustCrate
         (profileName: rec {
           name = "cxxbridge-cmd";
-          version = "1.0.154";
+          version = "1.0.155";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "8cbbb93a1bd7fe50fd3224c1e53c39cc598e3ee2645f27d97cfe680dee842567";
+            sha256 = "78ce717e582fc3b56bd2f1eb3cda9916e9b4629721e4c2ce637ac5e7d4beef11";
           };
           dependencies = {
             clap =
@@ -1637,30 +1637,30 @@ else
           };
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".cxxbridge-flags."1.0.154" =
+    "registry+https://github.com/rust-lang/crates.io-index".cxxbridge-flags."1.0.155" =
       overridableMkRustCrate
         (profileName: rec {
           name = "cxxbridge-flags";
-          version = "1.0.154";
+          version = "1.0.155";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "4eeff9e165d6c13561870550c60949170b9815a8ff77ade20f7a9e67c6b24755";
+            sha256 = "aa7fdd4b264a3335a8b21221092bd2fbfba35c3606bd50feb28d22ba3fb0a6e5";
           };
           features = builtins.concatLists [
             [ "default" ]
           ];
         });
 
-    "registry+https://github.com/rust-lang/crates.io-index".cxxbridge-macro."1.0.154" =
+    "registry+https://github.com/rust-lang/crates.io-index".cxxbridge-macro."1.0.155" =
       overridableMkRustCrate
         (profileName: rec {
           name = "cxxbridge-macro";
-          version = "1.0.154";
+          version = "1.0.155";
           registry = "registry+https://github.com/rust-lang/crates.io-index";
           src = fetchCratesIo {
             inherit name version;
-            sha256 = "089ac81a00466372610d7332416ad2f34def900ba9e8ee18d52db119a25eb574";
+            sha256 = "c36a0a2b78ff9232a3dc584340471d4fa1751a81026cf62f3661a06d5a8bae17";
           };
           dependencies = {
             proc_macro2 =
@@ -4118,7 +4118,7 @@ else
             inherit profileName;
           }).out;
         cxx =
-          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.154" {
+          (rustPackages."registry+https://github.com/rust-lang/crates.io-index".cxx."1.0.155" {
             inherit profileName;
           }).out;
         cxx_qt =
